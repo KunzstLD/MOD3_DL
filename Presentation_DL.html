@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Deep Learning</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Stefan Kunz" />
+    <script src="libs/header-attrs-2.5/header-attrs.js"></script>
+    <link href="libs/xaringanExtra-extra-styles-0.2.4/xaringanExtra-extra-styles.css" rel="stylesheet" />
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Deep Learning
+## …
+### Stefan Kunz
+### AG Landscape Ecology
+
+---
+
+&lt;style type="text/css"&gt;
+.remark-slide-content {
+    font-size: 18px;
+    padding: 1em 4em 1em 4em;
+}
+.small {
+  font-size: 15px;
+}
+&lt;/style&gt;
+
+
+
+
+
+
+General: 
+- Weights
+- Activation function
+- Loss function
+- Feedforward and backpropagation
+- Model training
+
+Few introductory words to: 
+- Building NN yourself
+- Using existing architectures and models 
+- Name some frameworks
+- Name some existing Models that can be used 
+- Training and Test data!
+
+---
+
+# Deep Learning in practice
+
+???
+_some introductionary picture? 
+
+---
+
+## Applications
+
+- Examples first!
+
+
+---
+
+## Deep Learning General
+
+- Machine Learning: 
+
+  - Generate predictive models by learning patterns in data
+  - Assume a pre-specified representation
+
+--
+
+- Deep Learning: 
+  - Powerful framework for supervised learning
+  - *Automatically* detect and extract features in data
+  - Goal: prediction
+  - Requires only annotated training data
+
+  `\(\rightarrow\)`  Core: function approximation
+
+---
+
+### Deep learning models are data hungry
+One possible solution: 
+--
+**Transfer learning**
+--
+
+- Extract knowledge from *source task* (e.g. a pretrained model) and apply to *target task*
+&lt;img src="Pictures/TL_explan.png" style="width: 100%"/&gt;
+
+???
+_That means using an existing model, trained on a large dataset and tuning it to our dataset_
+
+
+
+---
+### Transfer learning
+
+#### Advantages
+
+- Reduced training time
+
+- Smaller datasets (hundreds to thousands of samples)
+--
+
+
+#### Prerequisites: 
+
+- Availability of pretrained models  
+
+
+
+&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt; Task &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; Examples &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; Image Classification &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; ResNet-152 (2015), MobileNet (2017) &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; Text classification &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; BERT (2018), XLNet (2019) &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; Image segmentation &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; U-Net (2015) DeepLabV3 (2018) &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; Image translation &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Pix2Pix (2017) &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; Object detection &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; YOLO9000 (2016), Mask R-CNN (2017) &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; Speech generation &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; WaveNet (2016) &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+???
+_Say here: 
+
+Model architecture: Layers, graph of nodes and edges
+1) input 2) getting output 3) comparison with labels/predictions vs expectations
+4) propagating magnitude of error back to the model so that it can learn
+
+Result of training: Weights of the nodes
+
+Types of nodes: different themes of model architectures -&gt; CNNs, RNNs, GANs
+
+We will use MobileNet(), briefly introduce: Developed and trained by google for mobile devices (limited computational power and space). Could google and find model as well as accuracy metrics 
+
+_TODO: What is image segmentation and image translation?_
+
+
+
+
+---
+### Transfer Learning
+&lt;hr width = 750, align = "left"&gt;
+
+#### Prerequisites: 
+
+- Availability of pretrained models  
+
+--
+
+- Large annotated datasets (e.g. ImageNet)
+
+&lt;img src="Pictures/imagenet.png" style="width: 75%"/&gt;
+
+
+.footnote[.small[*http://image-net.org/explore*]]
+
+
+---
+
+
+
+### Transfer Learning
+
+#### Prerequisites: 
+
+- Availability of pretrained models 
+
+- Large annotated datasets (e.g. ImageNet)
+
+- Developments in computational power, i.e., faster and cheaper GPUs
+
+- Availability of algorithms (model architecture, optimizers,...)
+
+---
+
+
+
+### Transfer Learning using CNNs
+
+
+- Remove last few layers and "freeze" generic layers 
+
+&lt;img src="Pictures/cnn_transfer_learning.png" style="width: 75%"/&gt;
+
+
+
+.footnote[.small[*Koul, Ganju &amp; Kasam (2020)*]]
+
+
+???
+_First layers more general, middle-layers already specific, last layers very specific_
+_freeze: weights stay the same_
+
+---
+
+### Finetuning 
+
+- Unfreezing few of the frozen layers
+
+- Dependent on the amount of task-specific data
+
+&lt;img src="Pictures/finetuning.png" style="width: 75%"/&gt;
+
+
+.footnote[.small[*Koul, Ganju &amp; Kasam (2020)*]]
+
+???
+_allowing more weights to change_
+
+---
+
+
+
+### Examples in ecology 
+
+
+- Transfer learning &amp; CNNs to identify species of *Chironomidae* 
+
+&lt;img src="Pictures/chironomidae_classifier.png" style="width: 50%"/&gt;
+
+--
+
+- Transfer learning &amp; Object detection (R-CNN/YOLO) to label camera trap images `\(^2\)`
+
+
+.footnote[.small[*1 - Milošević et. al (2019); 
+2 - Schneider et. al (2018)*
+]] 
+
+
+
+---
+
+### Frameworks for training deep learning models
+
+- TensorFlow: 
+  - Developed initially for internal use by Google (2011)
+  - Written in *Python* and *C++*
+  - Difficult to use initially
+
+- Keras: 
+  - Open-source framework by Francois Chollet (written in *Python*)
+  - Easy to use, supports other deep learning libraries as backend 
+  - Keras now part of TensorFlow
+
+- PyTorch: 
+  - Developd by Facebook in 2016 (open-source) for *Python*
+  - Easy to use
+
+- Sharing models: Open Neural Network Exchange (ONNX)
+
+
+???
+Keras: coding the model and the training, TensorFlow for high-performance data pipeline 
+provieds also backend to other frameworks (e.g. Theano)
+
+ONNX: Standard format for machine learning models; provides conversion of models between frameworks
+Computation graph models, definitions for operators and standard data types
+Could use R with ONNX
+There is also the https://github.com/rstudio/tensorflow and 
+https://cran.r-project.org/web/packages/keras/vignettes/index.html
+https://torch.mlverse.org/
+
+
+Mention that there are also frameworks for inference, e.g. to make predictions inside an app 
+---
+
+
+Short recap at the end of the presentation, 
+so we are using an existing pretrained model (MobileNet(), CNN), 
+i.e. its weights trained on a large annotated image database
+Will change few of the last layers (specific) to customize the model
+for our classification task
+
+---
+
+### Basics of Deep Feedforward networks
+
+- Goal: approximate some function `\(f\)` 
+
+--
+- Mapping of some input x to an output y (e.g. a category)
+
+`\(y = f(x, \theta)\)` ; `\(\theta = parameters\)`
+
+--
+- Learns the value of the parameters `\(\theta\)` that result in the best function approximation
+
+--
+
+- **Feedforward**: Information flows from `\(x\)`, through `\(f\)` to output `\(y\)`
+
+--
+
+- **Networks**: Combine many different functions: 
+
+
+`\(f^{(1)}, f^{(2)}, f^{(3)} \rightarrow f(x) f^{(3)}(f^{(2)}(f^{(1)}(x)))\)`
+
+`\(f^{(1)} \rightarrow\)` first layer, `\(f^{(2)} \rightarrow\)` second layer, ... 
+
+--
+
+- Length of the chain: **Depth** of the model
+
+--
+
+- **Neural**: Inspired by the function of the brain, specifically the neuron
+
+???
+_No feedback connections in which outputs of the model are fed back into itself
+_recurrent neural networks have feedback connections
+
+_Deep Learnings vs shallow learning
+
+_Only loosly inspired by neuroscience and the working of a neuron
+
+
+---
+
+### Basics of Deep forward networks 
+
+Add here picture with Deep forward network structure (input, hidden and output layers)
+then come to discussion about relationship to neuroscience
+
+- Hidden layer: vectors
+- Each element in the vector can be seen as a "neuron" (units)
+- Each unit receives input from other units and computes its own activation value
+
+- Conclusion: Rather think of feedforward networks as *function approximation machines* !
+
+---
+
+### Relationship to statistics
+
+*"Neural networks are merely regression models with transformed predictors" (J. Hoeting)*
+
+--
+
+- Linear regression: 
+  - Easy to fit, known assumptions
+  - Limited to linear functions (cannot understand interaction between two input variables)
+
+--
+- Extension to represent nonlinear functions: apply linear model to transformed input 
+`\(\phi(x)\)`; `\(\phi\)` nonlinear transformation
+
+- Nonparametric regression: Polynomial regression, regression splines
+???
+_splines apply transformation to x_
+_Doesn't work well for many predictors_
+_User has to decide about the transformation_
+
+--
+
+- Deep learning: learns `\(\phi\)` based on the data!
+
+
+---
+### Examples 
+#### General 
+#### Ecology
+
+---
+### How to use in Ecology?
+
+---
+### Example of transfer learning
+
+
+
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "solarized-light",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
