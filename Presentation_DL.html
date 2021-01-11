@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="" xml:lang="">
   <head>
-    <title>Deep Learning</title>
+    <title>Deep Learning in practice</title>
     <meta charset="utf-8" />
     <meta name="author" content="Stefan Kunz" />
     <script src="libs/header-attrs-2.5/header-attrs.js"></script>
@@ -10,18 +10,33 @@
   </head>
   <body>
     <textarea id="source">
-class: center, middle, inverse, title-slide
 
-# Deep Learning
-## …
-### Stefan Kunz
-### AG Landscape Ecology
 
----
+class: title-slide
+
+.bg-text[
+
+# Deep Learning in practice
+### 
+&lt;hr /&gt;
+
+January, 14th
+
+Ralf B. Schäfer &amp; Stefan Kunz
+
+University of Koblenz-Landau
+
+]
+
+--
+
+.center[
+&lt;img src="Pictures/rbs_express.jpg" style="width: 20%"/&gt;
+]
 
 &lt;style type="text/css"&gt;
 .remark-slide-content {
-    font-size: 18px;
+    font-size: 20px;
     padding: 1em 4em 1em 4em;
 }
 .small {
@@ -34,62 +49,790 @@ class: center, middle, inverse, title-slide
 
 
 
-General: 
-- Weights
-- Activation function
-- Loss function
-- Feedforward and backpropagation
-- Model training
-
-Few introductory words to: 
-- Building NN yourself
-- Using existing architectures and models 
-- Name some frameworks
-- Name some existing Models that can be used 
-- Training and Test data!
-
 ---
 
-# Deep Learning in practice
+### Small example of a single hidden layer Neural Network (NN)
 
-???
-_some introductionary picture? 
-
----
-
-## Applications
-
-- Examples first!
-
-
----
-
-## Deep Learning General
-
-- Machine Learning: 
-
-  - Generate predictive models by learning patterns in data
-  - Assume a pre-specified representation
+--
+- R packages that implement NN: *neuralnet*, **nnet**, *MXNet*, *tensorflow &amp; keras*, *torch*, *...*
 
 --
 
-- Deep Learning: 
-  - Powerful framework for supervised learning
-  - *Automatically* detect and extract features in data
-  - Goal: prediction
-  - Requires only annotated training data
+- Acess through **caret** package
 
-  `\(\rightarrow\)`  Core: function approximation
+
+--
+
+- Provides an uniform interface for a large variety of different modeling functions in R
+
+
+```r
+library(nnet)
+library(caret)
+caret::train(
+  form,
+  method = "nnet",
+  tuneGrid,
+  ...
+)
+```
+
+--
+
+- Overview of supported models: http://topepo.github.io/caret/train-models-by-tag.html
+
+
+???
+_Package by Max Kuhn_
+_set of functions to streamlining predictive modelling_
+_Tools for data splitting, pre-processing, feature selection, resampling, variable importance_
+_uniform syntax_
 
 ---
 
+### Small example of a single hidden layer NN
+
+#### Nanopart data
+
+* Data: nanoparticles measured with and without fulvic acid 
+
+
+```r
+# load Set_up script
+source(file.path(getwd(), "R", "Set_up.R"))
+
+# load data
+nanopart &lt;- readRDS(file.path(data_in, "nanopart_preproc.RDS"))
+dim(nanopart)
+```
+
+```
+## [1] 171 120
+```
+
+---
+
+### Small example of a single hidden layer NN
+
+#### Nanopart data
+
+- Variables: molecular masses with signal intensities 
+
+
+```r
+names(nanopart)[1:4]
+```
+
+```
+## [1] "Mass_12_00" "Mass_15_01" "Mass_19_00" "Mass_24_00"
+```
+
+```r
+summary(nanopart$Mass_12_00)
+```
+
+```
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##   91121  157541  214411  208241  251010  437227
+```
+
+```r
+summary(nanopart$fulvic_acid)
+```
+
+```
+##  0  1 
+## 90 81
+```
+
+
+---
+
+### Small example of a single hidden layer NN
+
+#### Data preparation nanopart
+
+- Scaling the data either to `\([0, 1]\)` or `\(\mu = 0\)` and `\(\sigma = 1\)` to avoid the dominance of variables with large values
+
+
+```r
+# scaling (mean zero, sd 1)
+stand_nanopart &lt;-
+  scale(nanopart[, -ncol(nanopart)], 
+        center = TRUE,
+        scale = TRUE) %&gt;%
+  as.data.frame() %&gt;%
+  cbind(., "fulvic_acid" = nanopart[, "fulvic_acid"])
+
+# check mean and sd
+summary(stand_nanopart$Mass_12_00)
+```
+
+```
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+## -1.9774 -0.8560  0.1042  0.0000  0.7221  3.8660
+```
+
+```r
+sd(stand_nanopart$Mass_12_00)
+```
+
+```
+## [1] 1
+```
+
+???
+_remember every input gets multiplied by the weights and then summed up at the neuron_
+_the resulting value is then applied to the activation function_ 
+_If data are not in the same range, large valued variables will dominate_
+_If training long enough than weights would adjust for large valued variables, however this is not desirable_
+
+_uniform and highly non linear variables - normalize_
+_otherwise standardize_
+
+
+---
+
+### Small example of a single hidden layer NN
+#### Data preparation nanopart
+
+- Divide data into test and training data
+
+- *caret::createDataParatition()* does sample from within factors
+
+
+```r
+# index &lt;- sample(1:nrow(stand_nanopart), 
+# ceiling(0.75 * nrow(stand_nanopart)))
+# train &lt;- stand_nanopart[index, ]
+# test &lt;- stand_nanopart[-index, ]
+
+ind &lt;- createDataPartition(stand_nanopart$fulvic_acid, p = 0.75)
+train &lt;- stand_nanopart[ind[[1]], ]
+test &lt;- stand_nanopart[-ind[[1]], ]
+```
+
+
+---
+
+### Small example of a single hidden layer NN 
+#### Training
+
+
+```r
+# eval = FALSE
+nn_nanopart &lt;- train(
+  fulvic_acid ~ .,
+  data = train,
+  method = "nnet", 
+  tuneGrid = expand.grid(size = 5, # number of hidden layers
+                         decay = 5e-4), # regularization parameter
+  maxit = 100, 
+  metric = "Accuracy"
+)
+```
+
+```
+## # weights:  606
+## initial  value 105.478290 
+## iter  10 value 52.713234
+## iter  20 value 14.268332
+## iter  30 value 8.095443
+## iter  40 value 7.478190
+## iter  50 value 7.299902
+## iter  60 value 6.989315
+## iter  70 value 6.811425
+## iter  80 value 6.736999
+## iter  90 value 5.498634
+## iter 100 value 1.185196
+## final  value 1.185196 
+## stopped after 100 iterations
+## # weights:  606
+## initial  value 96.730531 
+## iter  10 value 29.516019
+## iter  20 value 16.883060
+## iter  30 value 5.665500
+## iter  40 value 5.181366
+## iter  50 value 4.982806
+## iter  60 value 4.076042
+## iter  70 value 4.005057
+## iter  80 value 3.969600
+## iter  90 value 3.935739
+## iter 100 value 1.289016
+## final  value 1.289016 
+## stopped after 100 iterations
+## # weights:  606
+## initial  value 93.898466 
+## iter  10 value 33.382469
+## iter  20 value 7.176003
+## iter  30 value 6.682676
+## iter  40 value 6.400531
+## iter  50 value 5.271618
+## iter  60 value 1.876488
+## iter  70 value 0.426156
+## iter  80 value 0.385564
+## iter  90 value 0.354793
+## iter 100 value 0.334143
+## final  value 0.334143 
+## stopped after 100 iterations
+## # weights:  606
+## initial  value 90.704328 
+## iter  10 value 27.789788
+## iter  20 value 4.082555
+## iter  30 value 0.579079
+## iter  40 value 0.496759
+## iter  50 value 0.437727
+## iter  60 value 0.394874
+## iter  70 value 0.367832
+## iter  80 value 0.345145
+## iter  90 value 0.317272
+## iter 100 value 0.286810
+## final  value 0.286810 
+## stopped after 100 iterations
+## # weights:  606
+## initial  value 101.979432 
+## iter  10 value 25.667905
+## iter  20 value 14.870573
+## iter  30 value 12.192232
+## iter  40 value 1.859554
+## iter  50 value 0.696581
+## iter  60 value 0.614328
+## iter  70 value 0.527061
+## iter  80 value 0.429306
+## iter  90 value 0.407014
+## iter 100 value 0.377773
+## final  value 0.377773 
+## stopped after 100 iterations
+## # weights:  606
+## initial  value 101.409669 
+## iter  10 value 57.040691
+## iter  20 value 33.136821
+## iter  30 value 21.021706
+## iter  40 value 18.534872
+## iter  50 value 16.914646
+## iter  60 value 14.533520
+## iter  70 value 11.805777
+## iter  80 value 11.116795
+## iter  90 value 10.953460
+## iter 100 value 10.851428
+## final  value 10.851428 
+## stopped after 100 iterations
+## # weights:  606
+## initial  value 129.980013 
+## iter  10 value 28.800822
+## iter  20 value 12.775953
+## iter  30 value 12.011826
+## iter  40 value 6.404444
+## iter  50 value 1.188694
+## iter  60 value 0.956933
+## iter  70 value 0.758488
+## iter  80 value 0.568078
+## iter  90 value 0.464854
+## iter 100 value 0.424801
+## final  value 0.424801 
+## stopped after 100 iterations
+## # weights:  606
+## initial  value 128.912266 
+## iter  10 value 61.082240
+## iter  20 value 24.095373
+## iter  30 value 12.245908
+## iter  40 value 7.255395
+## iter  50 value 1.475440
+## iter  60 value 0.892119
+## iter  70 value 0.761208
+## iter  80 value 0.631050
+## iter  90 value 0.477830
+## iter 100 value 0.413599
+## final  value 0.413599 
+## stopped after 100 iterations
+## # weights:  606
+## initial  value 102.462039 
+## iter  10 value 33.052879
+## iter  20 value 5.333127
+## iter  30 value 1.151714
+## iter  40 value 0.739256
+## iter  50 value 0.543933
+## iter  60 value 0.413345
+## iter  70 value 0.370204
+## iter  80 value 0.344910
+## iter  90 value 0.323879
+## iter 100 value 0.311071
+## final  value 0.311071 
+## stopped after 100 iterations
+## # weights:  606
+## initial  value 89.636397 
+## iter  10 value 17.171792
+## iter  20 value 6.130509
+## iter  30 value 5.697391
+## iter  40 value 5.619074
+## iter  50 value 1.201511
+## iter  60 value 0.389608
+## iter  70 value 0.320575
+## iter  80 value 0.282765
+## iter  90 value 0.240807
+## iter 100 value 0.220515
+## final  value 0.220515 
+## stopped after 100 iterations
+## # weights:  606
+## initial  value 105.752806 
+## iter  10 value 35.385323
+## iter  20 value 17.140782
+## iter  30 value 9.545280
+## iter  40 value 8.256321
+## iter  50 value 6.963095
+## iter  60 value 6.519270
+## iter  70 value 4.032762
+## iter  80 value 0.692304
+## iter  90 value 0.558658
+## iter 100 value 0.483256
+## final  value 0.483256 
+## stopped after 100 iterations
+## # weights:  606
+## initial  value 86.149014 
+## iter  10 value 33.645387
+## iter  20 value 4.763213
+## iter  30 value 0.688683
+## iter  40 value 0.594599
+## iter  50 value 0.520407
+## iter  60 value 0.445616
+## iter  70 value 0.402216
+## iter  80 value 0.344280
+## iter  90 value 0.318628
+## iter 100 value 0.283013
+## final  value 0.283013 
+## stopped after 100 iterations
+## # weights:  606
+## initial  value 91.395264 
+## iter  10 value 32.197667
+## iter  20 value 16.505880
+## iter  30 value 3.837124
+## iter  40 value 0.678450
+## iter  50 value 0.571330
+## iter  60 value 0.503259
+## iter  70 value 0.458482
+## iter  80 value 0.443074
+## iter  90 value 0.398137
+## iter 100 value 0.377718
+## final  value 0.377718 
+## stopped after 100 iterations
+## # weights:  606
+## initial  value 96.003361 
+## iter  10 value 35.318598
+## iter  20 value 10.077770
+## iter  30 value 8.893562
+## iter  40 value 2.111654
+## iter  50 value 1.209595
+## iter  60 value 1.064417
+## iter  70 value 0.916499
+## iter  80 value 0.778295
+## iter  90 value 0.625671
+## iter 100 value 0.446202
+## final  value 0.446202 
+## stopped after 100 iterations
+## # weights:  606
+## initial  value 97.003650 
+## iter  10 value 56.803033
+## iter  20 value 15.213131
+## iter  30 value 10.927967
+## iter  40 value 1.925562
+## iter  50 value 0.695300
+## iter  60 value 0.586723
+## iter  70 value 0.482613
+## iter  80 value 0.421412
+## iter  90 value 0.380341
+## iter 100 value 0.351946
+## final  value 0.351946 
+## stopped after 100 iterations
+## # weights:  606
+## initial  value 106.720005 
+## iter  10 value 32.870116
+## iter  20 value 12.480544
+## iter  30 value 12.045926
+## iter  40 value 11.848126
+## iter  50 value 4.488205
+## iter  60 value 0.834623
+## iter  70 value 0.690591
+## iter  80 value 0.586690
+## iter  90 value 0.483113
+## iter 100 value 0.434916
+## final  value 0.434916 
+## stopped after 100 iterations
+## # weights:  606
+## initial  value 90.453599 
+## iter  10 value 28.251935
+## iter  20 value 21.483691
+## iter  30 value 21.257157
+## iter  40 value 20.884448
+## iter  50 value 17.559433
+## iter  60 value 9.501271
+## iter  70 value 6.922656
+## iter  80 value 5.309429
+## iter  90 value 4.466496
+## iter 100 value 0.885096
+## final  value 0.885096 
+## stopped after 100 iterations
+## # weights:  606
+## initial  value 93.840672 
+## iter  10 value 33.627661
+## iter  20 value 9.109606
+## iter  30 value 1.230064
+## iter  40 value 0.752386
+## iter  50 value 0.633437
+## iter  60 value 0.568090
+## iter  70 value 0.478146
+## iter  80 value 0.442713
+## iter  90 value 0.401438
+## iter 100 value 0.326969
+## final  value 0.326969 
+## stopped after 100 iterations
+## # weights:  606
+## initial  value 121.476096 
+## iter  10 value 31.862650
+## iter  20 value 11.240729
+## iter  30 value 6.449501
+## iter  40 value 4.787857
+## iter  50 value 1.205529
+## iter  60 value 0.938273
+## iter  70 value 0.685591
+## iter  80 value 0.554522
+## iter  90 value 0.502059
+## iter 100 value 0.398029
+## final  value 0.398029 
+## stopped after 100 iterations
+## # weights:  606
+## initial  value 101.624723 
+## iter  10 value 41.616226
+## iter  20 value 18.759656
+## iter  30 value 6.084139
+## iter  40 value 1.332252
+## iter  50 value 1.027188
+## iter  60 value 0.902996
+## iter  70 value 0.799970
+## iter  80 value 0.721044
+## iter  90 value 0.593029
+## iter 100 value 0.496557
+## final  value 0.496557 
+## stopped after 100 iterations
+## # weights:  606
+## initial  value 91.278703 
+## iter  10 value 27.387591
+## iter  20 value 8.275907
+## iter  30 value 0.572104
+## iter  40 value 0.434351
+## iter  50 value 0.317699
+## iter  60 value 0.279338
+## iter  70 value 0.247049
+## iter  80 value 0.235876
+## iter  90 value 0.223462
+## iter 100 value 0.214020
+## final  value 0.214020 
+## stopped after 100 iterations
+## # weights:  606
+## initial  value 87.234735 
+## iter  10 value 6.442726
+## iter  20 value 2.621968
+## iter  30 value 0.622630
+## iter  40 value 0.541783
+## iter  50 value 0.486780
+## iter  60 value 0.423129
+## iter  70 value 0.405470
+## iter  80 value 0.389826
+## iter  90 value 0.374503
+## iter 100 value 0.365182
+## final  value 0.365182 
+## stopped after 100 iterations
+## # weights:  606
+## initial  value 110.963433 
+## iter  10 value 43.638498
+## iter  20 value 19.360764
+## iter  30 value 11.289192
+## iter  40 value 5.264685
+## iter  50 value 2.303719
+## iter  60 value 1.349652
+## iter  70 value 1.099031
+## iter  80 value 0.910186
+## iter  90 value 0.764277
+## iter 100 value 0.564593
+## final  value 0.564593 
+## stopped after 100 iterations
+## # weights:  606
+## initial  value 86.477866 
+## iter  10 value 31.843843
+## iter  20 value 18.814660
+## iter  30 value 13.612327
+## iter  40 value 5.704856
+## iter  50 value 5.440539
+## iter  60 value 5.343305
+## iter  70 value 5.286189
+## iter  80 value 5.244527
+## iter  90 value 5.189715
+## iter 100 value 5.170299
+## final  value 5.170299 
+## stopped after 100 iterations
+## # weights:  606
+## initial  value 93.655291 
+## iter  10 value 16.899963
+## iter  20 value 2.743733
+## iter  30 value 0.752628
+## iter  40 value 0.668949
+## iter  50 value 0.542230
+## iter  60 value 0.497312
+## iter  70 value 0.429889
+## iter  80 value 0.363895
+## iter  90 value 0.323811
+## iter 100 value 0.302008
+## final  value 0.302008 
+## stopped after 100 iterations
+## # weights:  606
+## initial  value 91.146997 
+## iter  10 value 22.695111
+## iter  20 value 1.388944
+## iter  30 value 0.904983
+## iter  40 value 0.736895
+## iter  50 value 0.626526
+## iter  60 value 0.547990
+## iter  70 value 0.502685
+## iter  80 value 0.466524
+## iter  90 value 0.430420
+## iter 100 value 0.386866
+## final  value 0.386866 
+## stopped after 100 iterations
+```
+
+???
+_mention tuning and preprocessing_
+
+---
+
+### Small example of a single hidden layer NN 
+
+
+```r
+NeuralNetTools::plotnet(nn_nanopart)
+```
+
+![](Presentation_DL_files/figure-html/unnamed-chunk-7-1.png)&lt;!-- --&gt;
+
+
+???
+_Nr of weights = parameters?_
+
+---
+### Small example of a single hidden layer NN 
+#### Predictions
+
+
+```r
+# training data
+result_train &lt;- predict(nn_nanopart, newdata = train)
+conf_train &lt;- caret::confusionMatrix(result_train, 
+                                     train$fulvic_acid)
+
+conf_train
+```
+
+```
+## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction  0  1
+##          0 68  0
+##          1  0 61
+##                                      
+##                Accuracy : 1          
+##                  95% CI : (0.9718, 1)
+##     No Information Rate : 0.5271     
+##     P-Value [Acc &gt; NIR] : &lt; 2.2e-16  
+##                                      
+##                   Kappa : 1          
+##                                      
+##  Mcnemar's Test P-Value : NA         
+##                                      
+##             Sensitivity : 1.0000     
+##             Specificity : 1.0000     
+##          Pos Pred Value : 1.0000     
+##          Neg Pred Value : 1.0000     
+##              Prevalence : 0.5271     
+##          Detection Rate : 0.5271     
+##    Detection Prevalence : 0.5271     
+##       Balanced Accuracy : 1.0000     
+##                                      
+##        'Positive' Class : 0          
+## 
+```
+
+---
+
+### Small example of a single hidden layer NN 
+#### Predictions
+
+
+```r
+# test data:
+results_test &lt;- predict(nn_nanopart, newdata=test)
+conf_test &lt;- confusionMatrix(results_test, 
+                             test$fulvic_acid)
+
+conf_test
+```
+
+```
+## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction  0  1
+##          0 21  0
+##          1  1 20
+##                                           
+##                Accuracy : 0.9762          
+##                  95% CI : (0.8743, 0.9994)
+##     No Information Rate : 0.5238          
+##     P-Value [Acc &gt; NIR] : 6.286e-11       
+##                                           
+##                   Kappa : 0.9524          
+##                                           
+##  Mcnemar's Test P-Value : 1               
+##                                           
+##             Sensitivity : 0.9545          
+##             Specificity : 1.0000          
+##          Pos Pred Value : 1.0000          
+##          Neg Pred Value : 0.9524          
+##              Prevalence : 0.5238          
+##          Detection Rate : 0.5000          
+##    Detection Prevalence : 0.5000          
+##       Balanced Accuracy : 0.9773          
+##                                           
+##        'Positive' Class : 0               
+## 
+```
+
+___
+
+### Small example of a single hidden layer NN 
+#### Predictions
+
+
+```r
+# get the probabilities for each class in the test set
+predict(nn_nanopart,
+        newdata = test,
+        type = 'prob')
+```
+
+
+---
+### Small example of a single hidden layer NN 
+#### Predictions
+
+- Prediction accuracy on test and traing dataset is 1
+
+- Model has potentially overfitted the data
+
+- Number of weights?
+
+
+
+```r
+# input layer nodes * hidden layer nodes + 
+# hidden layer nodes * output layer nodes +
+# bias (1) * hidden layers + bias (1) * output layer
+119*5 + 5*1 + 1*5 + 1*1
+```
+
+```
+## [1] 606
+```
+
+```r
+# confirm with
+nn_nanopart$finalModel
+```
+
+```
+## a 119-5-1 network with 606 weights
+## inputs: Mass_12_00 Mass_15_01 Mass_19_00 Mass_24_00 Mass_26_01 Mass_27_01 Mass_27_03 Mass_28_99 Mass_31_97 Mass_31_99 Mass_33_00 Mass_36_00 Mass_38_02 Mass_39_01 Mass_39_03 Mass_40_02 Mass_41_02 Mass_42_00 Mass_42_99 Mass_43_97 Mass_45_98 Mass_45_99 Mass_48_00 Mass_49_01 Mass_50_01 Mass_50_99 Mass_51_03 Mass_51_99 Mass_52_03 Mass_53_04 Mass_60_98 Mass_61_99 Mass_62_97 Mass_64_00 Mass_65_01 Mass_65_04 Mass_66_00 Mass_66_05 Mass_66_98 Mass_67_97 Mass_68_02 Mass_69_00 Mass_69_04 Mass_71_02 Mass_74_01 Mass_75_96 Mass_76_03 Mass_77_97 Mass_78_01 Mass_78_05 Mass_78_96 Mass_82_02 Mass_83_01 Mass_84_00 Mass_84_05 Mass_85_00 Mass_87_95 Mass_87_99 Mass_88_04 Mass_89_00 Mass_89_95 Mass_90_00 Mass_90_05 Mass_91_02 Mass_91_05 Mass_93_00 Mass_95_93 Mass_96_00 Mass_96_05 Mass_96_93 Mass_96_97 Mass_97_02 Mass_98_02 Mass_99_00 Mass_99_04 Mass_101_05 Mass_102_00 Mass_102_05 Mass_105_94 Mass_109_01 Mass_110_02 Mass_111_02 Mass_112_03 Mass_113_01 Mass_113_06 Mass_114_02 Mass_115_02 Mass_116_04 Mass_117_04 Mass_118_04 Mass_119_99 Mass_121_03 Mass_121_99 Mass_123_03 Mass_126_91 Mass_127_09 Mass_134_02 Mass_134_07 Mass_135_93 Mass_136_03 Mass_136_95 Mass_141_10 Mass_143_10 Mass_155_11 Mass_156_91 Mass_157_90 Mass_158_91 Mass_161_04 Mass_169_02 Mass_169_13 Mass_171_13 Mass_175_86 Mass_176_87 Mass_177_09 Mass_177_89 Mass_183_03 Mass_183_15 Mass_185_05 Mass_199_16 
+## output(s): .outcome 
+## options were - entropy fitting  decay=5e-04
+```
+
+---
+
+### Small example of a single hidden layer NN 
+
+Overfitting: 
+
+- Typically: 
+  - Very good performance on training data, bad performance on test data
+  (i.e. model has learned the noise in the training data)
+
+  - Many parameters and small datasets 
+
+--
+
+- Circumvent: Regularization &amp; DropOut
+
+--
+
+- In practice: NN in deep learning have often more parameters than training samples
+
+???
+_DropOut similarly to LASSO_
+_Maybe even the network structure prevents overfitting - ongoing research (Zhang et al. 2017)_
+_Many parameters also means high flexibility_
+
+---
+
+### Small example of a single hidden layer NN 
+#### Relative variable importance
+
+- Deconstructing model weights: identification of all weighted connections between an input node and the output node(s)
+
+
+```r
+VI &lt;- garson(nn_nanopart)
+VI$data[VI$data$x_names == "Mass_39_03", ]
+```
+
+```
+##       rel_imp    x_names
+## 15 0.01111107 Mass_39_03
+```
+
+
+---
+
+### Small example of a single hidden layer NN 
+#### Task: 
+
+Previous analysis of the data suggested that the following masses seem to
+be important to distinguish samples that contained fulvic acid from samples
+without fulvic acid:
+**Mass_39_03**, 
+**Mass_38_02**, 
+**Mass_65_04**, 
+**Mass_53_04**, 
+**Mass_45_98**
+
+1. Create a neural network classifier with only these 5 parameters, predicting whether
+a sample contained fulvic acid or not. *Bonus: vary the number of hidden units between 2 and 5.*
+
+2. How many weights has the neural network? 
+
+3. Compare the results with a logistic regression model
+
+
+
+---
 ### Deep learning models are data hungry
+
 One possible solution: 
 --
 **Transfer learning**
 --
 
 - Extract knowledge from *source task* (e.g. a pretrained model) and apply to *target task*
+
+--
 &lt;img src="Pictures/TL_explan.png" style="width: 100%"/&gt;
 
 ???
@@ -132,7 +875,7 @@ _That means using an existing model, trained on a large dataset and tuning it to
   &lt;/tr&gt;
   &lt;tr&gt;
    &lt;td style="text-align:left;"&gt; Image segmentation &lt;/td&gt;
-   &lt;td style="text-align:left;"&gt; U-Net (2015) DeepLabV3 (2018) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; U-Net (2015), DeepLabV3 (2018) &lt;/td&gt;
   &lt;/tr&gt;
   &lt;tr&gt;
    &lt;td style="text-align:left;"&gt; Image translation &lt;/td&gt;
@@ -169,7 +912,6 @@ _TODO: What is image segmentation and image translation?_
 
 ---
 ### Transfer Learning
-&lt;hr width = 750, align = "left"&gt;
 
 #### Prerequisites: 
 
@@ -220,12 +962,13 @@ _TODO: What is image segmentation and image translation?_
 ???
 _First layers more general, middle-layers already specific, last layers very specific_
 _freeze: weights stay the same_
+_say that features relate to characteristics in the pictures not to the variables_
 
 ---
 
 ### Finetuning 
 
-- Unfreezing few of the frozen layers
+- Unfreeze few of the frozen layers
 
 - Dependent on the amount of task-specific data
 
@@ -246,44 +989,97 @@ _allowing more weights to change_
 
 - Transfer learning &amp; CNNs to identify species of *Chironomidae* 
 
-&lt;img src="Pictures/chironomidae_classifier.png" style="width: 50%"/&gt;
+&lt;img src="Pictures/chironomidae_classifier.png" style="width: 60%"/&gt;
+
+
+
+.footnote[.small[Milošević et. al (2019)
+]] 
+
+???
+_What is shown here?_
+
+---
+
+### Examples in ecology 
+
+#### Using transfer learning:
+
+- CNNs to identify species of *Chironomidae* `\(^1\)`
 
 --
 
-- Transfer learning &amp; Object detection (R-CNN/YOLO) to label camera trap images `\(^2\)`
+- Object detection (R-CNN/YOLO) to label camera trap images `\(^2\)`
+
+--
+
+#### Other recent studies:
+
+- Tracking of global fisheries `\(^3\)`
+
+--
+
+- Parameterisation of abundance models `\(^4\)`
+
+--
+
+- Review: Christin et al. - Applications of deep learning in ecology
 
 
-.footnote[.small[*1 - Milošević et. al (2019); 
-2 - Schneider et. al (2018)*
-]] 
+.footnote[.small[
+`\(^1\)` Milošević et al. (2019); `\(^2\)` Schneider et al. (2018); `\(^3\)` Kroodsma et al. (2019) ; `\(^4\)` Joseph (2020)]]
 
 
+???
+_Most Papers very recently published in this field (&gt; 2017)_
+_Usage not only for image classification -&gt; think outside of the box (Max Joseph)_
 
 ---
 
 ### Frameworks for training deep learning models
 
-- TensorFlow: 
-  - Developed initially for internal use by Google (2011)
+- &lt;img src="Pictures/TensorFlowLogo.svg" style="width: 12%"/&gt;
+  - Library for training and inference of deep neural networks developed for internal use by Google (2011)
   - Written in *Python* and *C++*
-  - Difficult to use initially
+  - R: https://tensorflow.rstudio.com/
 
-- Keras: 
+--
+
+- &lt;img src="Pictures/Keras.png" style="width: 12%"/&gt;
   - Open-source framework by Francois Chollet (written in *Python*)
-  - Easy to use, supports other deep learning libraries as backend 
+  - Easy to use, supports also other deep learning libraries as backend 
   - Keras now part of TensorFlow
 
-- PyTorch: 
+--
+
+- &lt;img src="Pictures/Pytorch.png" style="width: 16%"/&gt;
   - Developd by Facebook in 2016 (open-source) for *Python*
   - Easy to use
+  - R: torch package https://torch.mlverse.org/packages/
+
+???
+Keras: coding the model and the training, TensorFlow for high-performance data pipeline, 
+provids also backend to other frameworks (e.g. Theano)
+
+
+_Tensorflow source: https://upload.wikimedia.org/wikipedia/commons/1/11/TensorFlowLogo.svg_
+
+_Mention that there are also frameworks for inference, e.g. to make predictions inside an app_
+
+---
+
+### Frameworks for training deep learning models
+
+- &lt;img src="Pictures/TensorFlowLogo.svg" style="width: 12%"/&gt;
+
+- &lt;img src="Pictures/Keras.png" style="width: 12%"/&gt;
+
+- &lt;img src="Pictures/Pytorch.png" style="width: 16%"/&gt;
+
 
 - Sharing models: Open Neural Network Exchange (ONNX)
 
-
 ???
-Keras: coding the model and the training, TensorFlow for high-performance data pipeline 
-provieds also backend to other frameworks (e.g. Theano)
-
 ONNX: Standard format for machine learning models; provides conversion of models between frameworks
 Computation graph models, definitions for operators and standard data types
 Could use R with ONNX
@@ -291,19 +1087,54 @@ There is also the https://github.com/rstudio/tensorflow and
 https://cran.r-project.org/web/packages/keras/vignettes/index.html
 https://torch.mlverse.org/
 
-
-Mention that there are also frameworks for inference, e.g. to make predictions inside an app 
 ---
 
+### Transfer learning example in Python
 
-Short recap at the end of the presentation, 
-so we are using an existing pretrained model (MobileNet(), CNN), 
-i.e. its weights trained on a large annotated image database
-Will change few of the last layers (specific) to customize the model
+
+- We are using an existing pretrained model *MobileNet()*
+
+- This model is an CNN
+
+- Its weights are trained on a large annotated image database (ImageNet)
+
+- We will "freeze" most of the generic layers
+
+- We will change few of the last layers (specific) to customize the model
 for our classification task
 
 ---
 
+### Applications
+
+.center[
+
+Art: 
+
+&lt;img src="Pictures/rbs.png" style="width: 20%"/&gt;
+
+]
+
+--
+
+.center[
+
+&lt;img src="Pictures/rbs_express.jpg" style="width: 20%"/&gt;
+]
+
+
+???
+_Sources for pictures: 
+computer vision:
+https://www.analyticsinsight.net/wp-content/uploads/2019/04/Computer-Vision12.png
+speech recognition:
+https://joelgarciajr84.medium.com/creating-an-application-that-uses-speech-recognition-76117a396b7d
+
+
+
+---
+
+## Additional 
 ### Basics of Deep Feedforward networks
 
 - Goal: approximate some function `\(f\)` 
@@ -385,17 +1216,6 @@ _User has to decide about the transformation_
 
 - Deep learning: learns `\(\phi\)` based on the data!
 
-
----
-### Examples 
-#### General 
-#### Ecology
-
----
-### How to use in Ecology?
-
----
-### Example of transfer learning
 
 
 

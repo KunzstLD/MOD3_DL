@@ -1,6 +1,6 @@
 ---
-title: "Deep Learning"
-subtitle: "..."
+title: "Deep Learning in practice"
+subtitle: ""
 author: "Stefan Kunz"
 # date: "2016/12/12"
 institute: "AG Landscape Ecology"
@@ -12,10 +12,35 @@ output:
       highlightStyle: solarized-light
       highlightLines: true
       countIncrementalSlides: false
+      # countdown: 60000
+    seal: false
 ---
+
+class: title-slide
+
+.bg-text[
+
+# Deep Learning in practice
+### 
+<hr />
+
+January, 14th
+
+Ralf B. Schäfer & Stefan Kunz
+
+University of Koblenz-Landau
+
+]
+
+--
+
+.center[
+<img src="Pictures/rbs_express.jpg" style="width: 20%"/>
+]
+
 <style type="text/css">
 .remark-slide-content {
-    font-size: 18px;
+    font-size: 20px;
     padding: 1em 4em 1em 4em;
 }
 .small {
@@ -27,6 +52,8 @@ output:
 ```{r xaringan-themer, include=FALSE, warning=FALSE}
 library(knitr)
 library(xaringanthemer)
+library(xaringanExtra)
+# library(showtext)
 # style_duo(primary_color = "#43418A", 
 #           secondary_color = "#F97B64")
 style_solarized_light(header_color = "steelblue")
@@ -39,62 +66,295 @@ xaringanExtra::use_extra_styles(
 )
 ```
 
-General: 
-- Weights
-- Activation function
-- Loss function
-- Feedforward and backpropagation
-- Model training
-
-Few introductory words to: 
-- Building NN yourself
-- Using existing architectures and models 
-- Name some frameworks
-- Name some existing Models that can be used 
-- Training and Test data!
-
 ---
 
-# Deep Learning in practice
+### Small example of a single hidden layer Neural Network (NN)
 
-???
-_some introductionary picture? 
-
----
-
-## Applications
-
-- Examples first!
-
-
----
-
-## Deep Learning General
-
-- Machine Learning: 
-
-  - Generate predictive models by learning patterns in data
-  - Assume a pre-specified representation
+--
+- R packages that implement NN: *neuralnet*, **nnet**, *MXNet*, *tensorflow & keras*, *torch*, *...*
 
 --
 
-- Deep Learning: 
-  - Powerful framework for supervised learning
-  - *Automatically* detect and extract features in data
-  - Goal: prediction
-  - Requires only annotated training data
+- Acess through **caret** package
 
-  $\rightarrow$  Core: function approximation
+
+--
+
+- Provides an uniform interface for a large variety of different modeling functions in R
+
+```{r, eval = FALSE}
+library(nnet)
+library(caret)
+caret::train(
+  form,
+  method = "nnet",
+  tuneGrid,
+  ...
+)
+```
+
+--
+
+- Overview of supported models: http://topepo.github.io/caret/train-models-by-tag.html
+
+
+???
+_Package by Max Kuhn_
+_set of functions to streamlining predictive modelling_
+_Tools for data splitting, pre-processing, feature selection, resampling, variable importance_
+_uniform syntax_
 
 ---
 
+### Small example of a single hidden layer NN
+
+#### Nanopart data
+
+* Data: nanoparticles measured with and without fulvic acid 
+
+```{r}
+# load Set_up script
+source(file.path(getwd(), "R", "Set_up.R"))
+
+# load data
+nanopart <- readRDS(file.path(data_in, "nanopart_preproc.RDS"))
+dim(nanopart)
+```
+
+---
+
+### Small example of a single hidden layer NN
+
+#### Nanopart data
+
+- Variables: molecular masses with signal intensities 
+
+```{r}
+names(nanopart)[1:4]
+summary(nanopart$Mass_12_00)
+summary(nanopart$fulvic_acid)
+```
+
+
+---
+
+### Small example of a single hidden layer NN
+
+#### Data preparation nanopart
+
+- Scaling the data either to $[0, 1]$ or $\mu = 0$ and $\sigma = 1$ to avoid the dominance of variables with large values
+
+```{r}
+# scaling (mean zero, sd 1)
+stand_nanopart <-
+  scale(nanopart[, -ncol(nanopart)], 
+        center = TRUE,
+        scale = TRUE) %>%
+  as.data.frame() %>%
+  cbind(., "fulvic_acid" = nanopart[, "fulvic_acid"])
+
+# check mean and sd
+summary(stand_nanopart$Mass_12_00)
+sd(stand_nanopart$Mass_12_00)
+```
+
+???
+_remember every input gets multiplied by the weights and then summed up at the neuron_
+_the resulting value is then applied to the activation function_ 
+_If data are not in the same range, large valued variables will dominate_
+_If training long enough than weights would adjust for large valued variables, however this is not desirable_
+
+_uniform and highly non linear variables - normalize_
+_otherwise standardize_
+
+
+---
+
+### Small example of a single hidden layer NN
+#### Data preparation nanopart
+
+- Divide data into test and training data
+
+- *caret::createDataParatition()* does sample from within factors
+
+```{r}
+# index <- sample(1:nrow(stand_nanopart), 
+# ceiling(0.75 * nrow(stand_nanopart)))
+# train <- stand_nanopart[index, ]
+# test <- stand_nanopart[-index, ]
+
+ind <- createDataPartition(stand_nanopart$fulvic_acid, p = 0.75)
+train <- stand_nanopart[ind[[1]], ]
+test <- stand_nanopart[-ind[[1]], ]
+```
+
+
+---
+
+### Small example of a single hidden layer NN 
+#### Training
+
+```{r} 
+# eval = FALSE
+nn_nanopart <- train(
+  fulvic_acid ~ .,
+  data = train,
+  method = "nnet", 
+  tuneGrid = expand.grid(size = 5, # number of hidden layers
+                         decay = 5e-4), # regularization parameter
+  maxit = 100, 
+  metric = "Accuracy"
+)
+```
+
+???
+_mention tuning and preprocessing_
+
+---
+
+### Small example of a single hidden layer NN 
+
+```{r}
+NeuralNetTools::plotnet(nn_nanopart)
+```
+
+
+???
+_Nr of weights = parameters?_
+
+---
+### Small example of a single hidden layer NN 
+#### Predictions
+
+```{r}
+# training data
+result_train <- predict(nn_nanopart, newdata = train)
+conf_train <- caret::confusionMatrix(result_train, 
+                                     train$fulvic_acid)
+
+conf_train
+```
+
+---
+
+### Small example of a single hidden layer NN 
+#### Predictions
+
+```{r}
+# test data:
+results_test <- predict(nn_nanopart, newdata=test)
+conf_test <- confusionMatrix(results_test, 
+                             test$fulvic_acid)
+
+conf_test
+```
+
+___
+
+### Small example of a single hidden layer NN 
+#### Predictions
+
+```{r, eval = FALSE}
+# get the probabilities for each class in the test set
+predict(nn_nanopart,
+        newdata = test,
+        type = 'prob')
+```
+
+
+---
+### Small example of a single hidden layer NN 
+#### Predictions
+
+- Prediction accuracy on test and traing dataset is 1
+
+- Model has potentially overfitted the data
+
+- Number of weights?
+
+
+```{r}
+# input layer nodes * hidden layer nodes + 
+# hidden layer nodes * output layer nodes +
+# bias (1) * hidden layers + bias (1) * output layer
+119*5 + 5*1 + 1*5 + 1*1
+
+# confirm with
+nn_nanopart$finalModel
+```
+
+---
+
+### Small example of a single hidden layer NN 
+
+Overfitting: 
+
+- Typically: 
+  - Very good performance on training data, bad performance on test data
+  (i.e. model has learned the noise in the training data)
+
+  - Many parameters and small datasets 
+
+--
+
+- Circumvent: Regularization & DropOut
+
+--
+
+- In practice: NN in deep learning have often more parameters than training samples
+
+???
+_DropOut similarly to LASSO_
+_Maybe even the network structure prevents overfitting - ongoing research (Zhang et al. 2017)_
+_Many parameters also means high flexibility_
+
+---
+
+### Small example of a single hidden layer NN 
+#### Relative variable importance
+
+- Deconstructing model weights: identification of all weighted connections between an input node and the output node(s)
+
+```{r}
+VI <- garson(nn_nanopart)
+VI$data[VI$data$x_names == "Mass_39_03", ]
+```
+
+
+---
+
+### Small example of a single hidden layer NN 
+#### Task: 
+
+Previous analysis of the data suggested that the following masses seem to
+be important to distinguish samples that contained fulvic acid from samples
+without fulvic acid:
+**Mass_39_03**, 
+**Mass_38_02**, 
+**Mass_65_04**, 
+**Mass_53_04**, 
+**Mass_45_98**
+
+1. Create a neural network classifier with only these 5 parameters, predicting whether
+a sample contained fulvic acid or not. *Bonus: vary the number of hidden units between 2 and 5.*
+
+2. How many weights has the neural network? 
+
+3. Compare the results with a logistic regression model
+
+
+
+---
 ### Deep learning models are data hungry
+
 One possible solution: 
 --
 **Transfer learning**
 --
 
 - Extract knowledge from *source task* (e.g. a pretrained model) and apply to *target task*
+
+--
 <img src="Pictures/TL_explan.png" style="width: 100%"/>
 
 ???
@@ -130,7 +390,7 @@ mod_architectures <- data.frame(
   `Examples` = c(
     "ResNet-152 (2015), MobileNet (2017)",
     "BERT (2018), XLNet (2019)",
-    "U-Net (2015) DeepLabV3 (2018)",
+    "U-Net (2015), DeepLabV3 (2018)",
     "Pix2Pix (2017)",
     "YOLO9000 (2016), Mask R-CNN (2017)",
     "WaveNet (2016)"
@@ -162,7 +422,6 @@ _TODO: What is image segmentation and image translation?_
 
 ---
 ### Transfer Learning
-<hr width = 750, align = "left">
 
 #### Prerequisites: 
 
@@ -213,12 +472,13 @@ _TODO: What is image segmentation and image translation?_
 ???
 _First layers more general, middle-layers already specific, last layers very specific_
 _freeze: weights stay the same_
+_say that features relate to characteristics in the pictures not to the variables_
 
 ---
 
 ### Finetuning 
 
-- Unfreezing few of the frozen layers
+- Unfreeze few of the frozen layers
 
 - Dependent on the amount of task-specific data
 
@@ -239,44 +499,97 @@ _allowing more weights to change_
 
 - Transfer learning & CNNs to identify species of *Chironomidae* 
 
-<img src="Pictures/chironomidae_classifier.png" style="width: 50%"/>
+<img src="Pictures/chironomidae_classifier.png" style="width: 60%"/>
+
+
+
+.footnote[.small[Milošević et. al (2019)
+]] 
+
+???
+_What is shown here?_
+
+---
+
+### Examples in ecology 
+
+#### Using transfer learning:
+
+- CNNs to identify species of *Chironomidae* $^1$
 
 --
 
-- Transfer learning & Object detection (R-CNN/YOLO) to label camera trap images $^2$
+- Object detection (R-CNN/YOLO) to label camera trap images $^2$
+
+--
+
+#### Other recent studies:
+
+- Tracking of global fisheries $^3$
+
+--
+
+- Parameterisation of abundance models $^4$
+
+--
+
+- Review: Christin et al. - Applications of deep learning in ecology
 
 
-.footnote[.small[*1 - Milošević et. al (2019); 
-2 - Schneider et. al (2018)*
-]] 
+.footnote[.small[
+$^1$ Milošević et al. (2019); $^2$ Schneider et al. (2018); $^3$ Kroodsma et al. (2019) ; $^4$ Joseph (2020)]]
 
 
+???
+_Most Papers very recently published in this field (> 2017)_
+_Usage not only for image classification -> think outside of the box (Max Joseph)_
 
 ---
 
 ### Frameworks for training deep learning models
 
-- TensorFlow: 
-  - Developed initially for internal use by Google (2011)
+- <img src="Pictures/TensorFlowLogo.svg" style="width: 12%"/>
+  - Library for training and inference of deep neural networks developed for internal use by Google (2011)
   - Written in *Python* and *C++*
-  - Difficult to use initially
+  - R: https://tensorflow.rstudio.com/
 
-- Keras: 
+--
+
+- <img src="Pictures/Keras.png" style="width: 12%"/>
   - Open-source framework by Francois Chollet (written in *Python*)
-  - Easy to use, supports other deep learning libraries as backend 
+  - Easy to use, supports also other deep learning libraries as backend 
   - Keras now part of TensorFlow
 
-- PyTorch: 
+--
+
+- <img src="Pictures/Pytorch.png" style="width: 16%"/>
   - Developd by Facebook in 2016 (open-source) for *Python*
   - Easy to use
+  - R: torch package https://torch.mlverse.org/packages/
+
+???
+Keras: coding the model and the training, TensorFlow for high-performance data pipeline, 
+provids also backend to other frameworks (e.g. Theano)
+
+
+_Tensorflow source: https://upload.wikimedia.org/wikipedia/commons/1/11/TensorFlowLogo.svg_
+
+_Mention that there are also frameworks for inference, e.g. to make predictions inside an app_
+
+---
+
+### Frameworks for training deep learning models
+
+- <img src="Pictures/TensorFlowLogo.svg" style="width: 12%"/>
+
+- <img src="Pictures/Keras.png" style="width: 12%"/>
+
+- <img src="Pictures/Pytorch.png" style="width: 16%"/>
+
 
 - Sharing models: Open Neural Network Exchange (ONNX)
 
-
 ???
-Keras: coding the model and the training, TensorFlow for high-performance data pipeline 
-provieds also backend to other frameworks (e.g. Theano)
-
 ONNX: Standard format for machine learning models; provides conversion of models between frameworks
 Computation graph models, definitions for operators and standard data types
 Could use R with ONNX
@@ -284,19 +597,54 @@ There is also the https://github.com/rstudio/tensorflow and
 https://cran.r-project.org/web/packages/keras/vignettes/index.html
 https://torch.mlverse.org/
 
-
-Mention that there are also frameworks for inference, e.g. to make predictions inside an app 
 ---
 
+### Transfer learning example in Python
 
-Short recap at the end of the presentation, 
-so we are using an existing pretrained model (MobileNet(), CNN), 
-i.e. its weights trained on a large annotated image database
-Will change few of the last layers (specific) to customize the model
+
+- We are using an existing pretrained model *MobileNet()*
+
+- This model is an CNN
+
+- Its weights are trained on a large annotated image database (ImageNet)
+
+- We will "freeze" most of the generic layers
+
+- We will change few of the last layers (specific) to customize the model
 for our classification task
 
 ---
 
+### Applications
+
+.center[
+
+Art: 
+
+<img src="Pictures/rbs.png" style="width: 20%"/>
+
+]
+
+--
+
+.center[
+
+<img src="Pictures/rbs_express.jpg" style="width: 20%"/>
+]
+
+
+???
+_Sources for pictures: 
+computer vision:
+https://www.analyticsinsight.net/wp-content/uploads/2019/04/Computer-Vision12.png
+speech recognition:
+https://joelgarciajr84.medium.com/creating-an-application-that-uses-speech-recognition-76117a396b7d
+
+
+
+---
+
+## Additional 
 ### Basics of Deep Feedforward networks
 
 - Goal: approximate some function $f$ 
@@ -378,17 +726,6 @@ _User has to decide about the transformation_
 
 - Deep learning: learns $\phi$ based on the data!
 
-
----
-### Examples 
-#### General 
-#### Ecology
-
----
-### How to use in Ecology?
-
----
-### Example of transfer learning
 
 
 
