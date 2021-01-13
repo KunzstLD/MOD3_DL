@@ -51,12 +51,79 @@ University of Koblenz-Landau
 
 ---
 
+### Libraries &amp; frameworks for deep learning models
+
+#### R packages that implement NN:
+
+- *neuralnet*, *nnet*, *MXNet*, *tensorflow &amp; keras*, *torch*, *...*
+
+#### Frameworks for training deep learning models:
+
+- Developed by industry (Google, Facebook, ...) and research institutions
+
+- Previously written code blocks have been re-used for new tools &amp; algorithms 
+
+- Created with *Python*, *C++*, *Lua*, ...
+
+- Mostly used with Python 
+
+---
+
+### Frameworks for training deep learning models:
+
+- &lt;img src="Pictures/TensorFlowLogo.svg" style="width: 12%"/&gt;
+  - Library for training and inference of deep neural networks developed for internal use by Google (2011)
+  - R: https://tensorflow.rstudio.com/
+
+--
+
+- &lt;img src="Pictures/Pytorch.png" style="width: 16%"/&gt;
+  - Developd by Facebook in 2016 (open-source) for *Python*  
+  - R: torch package https://torch.mlverse.org/packages/
+
+--
+
+- &lt;img src="Pictures/Keras.png" style="width: 12%"/&gt;
+  - Open-source high-level deep learning framework by Francois Chollet (written in *Python*)
+  - Easy to use, supports tensorflow and other deep learning libraries as backend 
+  - Keras now part of TensorFlow
+
+
+???
+_Keras: coding the model and the training, TensorFlow for high-performance data pipeline,_ 
+_provides also backend to other frameworks (e.g. Theano)_
+_Keras: in f10-15 lines of code a deep learning model can be defined and trained_
+
+_Tensorflow source: https://upload.wikimedia.org/wikipedia/commons/1/11/TensorFlowLogo.svg_
+
+_Mention that there are also frameworks for inference, e.g. to make predictions inside an app_
+
+---
+
+### Frameworks for training deep learning models
+
+- &lt;img src="Pictures/TensorFlowLogo.svg" style="width: 12%"/&gt;
+
+- &lt;img src="Pictures/Keras.png" style="width: 12%"/&gt;
+
+- &lt;img src="Pictures/Pytorch.png" style="width: 16%"/&gt;
+
+
+- Sharing models: Open Neural Network Exchange (ONNX)
+
+???
+ONNX: Standard format for machine learning models; provides conversion of models between frameworks
+Computation graph models, definitions for operators and standard data types
+Could use R with ONNX
+There is also the https://github.com/rstudio/tensorflow and 
+https://cran.r-project.org/web/packages/keras/vignettes/index.html
+https://torch.mlverse.org/
+
+---
+
 ### Small example of a single hidden layer Neural Network (NN)
 
---
-- R packages that implement NN: *neuralnet*, **nnet**, *MXNet*, *tensorflow &amp; keras*, *torch*, *...*
-
---
+- Will use the **nnet** package
 
 - Acess through **caret** package
 
@@ -152,7 +219,9 @@ summary(nanopart$fulvic_acid)
 
 #### Data preparation nanopart
 
-- Scaling the data either to `\([0, 1]\)` or `\(\mu = 0\)` and `\(\sigma = 1\)` to avoid the dominance of variables with large values
+- Normalising the data either to `\([0, 1]\)` or scaling to `\(\mu = 0\)` and `\(\sigma = 1\)` to avoid the dominance of variables with large values
+
+--
 
 
 ```r
@@ -220,7 +289,14 @@ test &lt;- stand_nanopart[-ind[[1]], ]
 
 
 ```r
-# eval = FALSE
+str(train$fulvic_acid)
+```
+
+```
+##  Factor w/ 2 levels "0","1": 1 1 1 1 1 1 1 1 1 1 ...
+```
+
+```r
 nn_nanopart &lt;- train(
   fulvic_acid ~ .,
   data = train,
@@ -234,373 +310,374 @@ nn_nanopart &lt;- train(
 
 ```
 ## # weights:  606
-## initial  value 105.478290 
-## iter  10 value 52.713234
-## iter  20 value 14.268332
-## iter  30 value 8.095443
-## iter  40 value 7.478190
-## iter  50 value 7.299902
-## iter  60 value 6.989315
-## iter  70 value 6.811425
-## iter  80 value 6.736999
-## iter  90 value 5.498634
-## iter 100 value 1.185196
-## final  value 1.185196 
+## initial  value 93.181713 
+## iter  10 value 20.530877
+## iter  20 value 3.467579
+## iter  30 value 0.765950
+## iter  40 value 0.515831
+## iter  50 value 0.434554
+## iter  60 value 0.384603
+## iter  70 value 0.354299
+## iter  80 value 0.325228
+## iter  90 value 0.302063
+## iter 100 value 0.279141
+## final  value 0.279141 
 ## stopped after 100 iterations
 ## # weights:  606
-## initial  value 96.730531 
-## iter  10 value 29.516019
-## iter  20 value 16.883060
-## iter  30 value 5.665500
-## iter  40 value 5.181366
-## iter  50 value 4.982806
-## iter  60 value 4.076042
-## iter  70 value 4.005057
-## iter  80 value 3.969600
-## iter  90 value 3.935739
-## iter 100 value 1.289016
-## final  value 1.289016 
+## initial  value 87.510455 
+## iter  10 value 36.047011
+## iter  20 value 22.905789
+## iter  30 value 4.658219
+## iter  40 value 1.002085
+## iter  50 value 0.871346
+## iter  60 value 0.760866
+## iter  70 value 0.663048
+## iter  80 value 0.581185
+## iter  90 value 0.530089
+## iter 100 value 0.437502
+## final  value 0.437502 
 ## stopped after 100 iterations
 ## # weights:  606
-## initial  value 93.898466 
-## iter  10 value 33.382469
-## iter  20 value 7.176003
-## iter  30 value 6.682676
-## iter  40 value 6.400531
-## iter  50 value 5.271618
-## iter  60 value 1.876488
-## iter  70 value 0.426156
-## iter  80 value 0.385564
-## iter  90 value 0.354793
-## iter 100 value 0.334143
-## final  value 0.334143 
+## initial  value 88.807845 
+## iter  10 value 24.097203
+## iter  20 value 2.434741
+## iter  30 value 0.413691
+## iter  40 value 0.346468
+## iter  50 value 0.294477
+## iter  60 value 0.265491
+## iter  70 value 0.246270
+## iter  80 value 0.236900
+## iter  90 value 0.223787
+## iter 100 value 0.212910
+## final  value 0.212910 
 ## stopped after 100 iterations
 ## # weights:  606
-## initial  value 90.704328 
-## iter  10 value 27.789788
-## iter  20 value 4.082555
-## iter  30 value 0.579079
-## iter  40 value 0.496759
-## iter  50 value 0.437727
-## iter  60 value 0.394874
-## iter  70 value 0.367832
-## iter  80 value 0.345145
-## iter  90 value 0.317272
-## iter 100 value 0.286810
-## final  value 0.286810 
+## initial  value 92.311847 
+## iter  10 value 33.516173
+## iter  20 value 22.221448
+## iter  30 value 3.220196
+## iter  40 value 2.804298
+## iter  50 value 2.687163
+## iter  60 value 0.715327
+## iter  70 value 0.478234
+## iter  80 value 0.452913
+## iter  90 value 0.427532
+## iter 100 value 0.387675
+## final  value 0.387675 
 ## stopped after 100 iterations
 ## # weights:  606
-## initial  value 101.979432 
-## iter  10 value 25.667905
-## iter  20 value 14.870573
-## iter  30 value 12.192232
-## iter  40 value 1.859554
-## iter  50 value 0.696581
-## iter  60 value 0.614328
-## iter  70 value 0.527061
-## iter  80 value 0.429306
-## iter  90 value 0.407014
-## iter 100 value 0.377773
-## final  value 0.377773 
+## initial  value 93.580694 
+## iter  10 value 20.211214
+## iter  20 value 8.185255
+## iter  30 value 7.901725
+## iter  40 value 7.399546
+## iter  50 value 4.818774
+## iter  60 value 0.925885
+## iter  70 value 0.813598
+## iter  80 value 0.711774
+## iter  90 value 0.587813
+## iter 100 value 0.460806
+## final  value 0.460806 
 ## stopped after 100 iterations
 ## # weights:  606
-## initial  value 101.409669 
-## iter  10 value 57.040691
-## iter  20 value 33.136821
-## iter  30 value 21.021706
-## iter  40 value 18.534872
-## iter  50 value 16.914646
-## iter  60 value 14.533520
-## iter  70 value 11.805777
-## iter  80 value 11.116795
-## iter  90 value 10.953460
-## iter 100 value 10.851428
-## final  value 10.851428 
+## initial  value 93.146142 
+## iter  10 value 20.098864
+## iter  20 value 5.401826
+## iter  30 value 0.850099
+## iter  40 value 0.537729
+## iter  50 value 0.464607
+## iter  60 value 0.404200
+## iter  70 value 0.380198
+## iter  80 value 0.366011
+## iter  90 value 0.336356
+## iter 100 value 0.298760
+## final  value 0.298760 
 ## stopped after 100 iterations
 ## # weights:  606
-## initial  value 129.980013 
-## iter  10 value 28.800822
-## iter  20 value 12.775953
-## iter  30 value 12.011826
-## iter  40 value 6.404444
-## iter  50 value 1.188694
-## iter  60 value 0.956933
-## iter  70 value 0.758488
-## iter  80 value 0.568078
-## iter  90 value 0.464854
-## iter 100 value 0.424801
-## final  value 0.424801 
+## initial  value 87.622276 
+## iter  10 value 19.219275
+## iter  20 value 1.750659
+## iter  30 value 0.913198
+## iter  40 value 0.783064
+## iter  50 value 0.667251
+## iter  60 value 0.623266
+## iter  70 value 0.557019
+## iter  80 value 0.504209
+## iter  90 value 0.447537
+## iter 100 value 0.410388
+## final  value 0.410388 
 ## stopped after 100 iterations
 ## # weights:  606
-## initial  value 128.912266 
-## iter  10 value 61.082240
-## iter  20 value 24.095373
-## iter  30 value 12.245908
-## iter  40 value 7.255395
-## iter  50 value 1.475440
-## iter  60 value 0.892119
-## iter  70 value 0.761208
-## iter  80 value 0.631050
-## iter  90 value 0.477830
-## iter 100 value 0.413599
-## final  value 0.413599 
+## initial  value 90.554730 
+## iter  10 value 59.558723
+## iter  20 value 16.334099
+## iter  30 value 1.933113
+## iter  40 value 1.192415
+## iter  50 value 0.826606
+## iter  60 value 0.624886
+## iter  70 value 0.460872
+## iter  80 value 0.404792
+## iter  90 value 0.360800
+## iter 100 value 0.334087
+## final  value 0.334087 
 ## stopped after 100 iterations
 ## # weights:  606
-## initial  value 102.462039 
-## iter  10 value 33.052879
-## iter  20 value 5.333127
-## iter  30 value 1.151714
-## iter  40 value 0.739256
-## iter  50 value 0.543933
-## iter  60 value 0.413345
-## iter  70 value 0.370204
-## iter  80 value 0.344910
-## iter  90 value 0.323879
-## iter 100 value 0.311071
-## final  value 0.311071 
+## initial  value 107.111102 
+## iter  10 value 45.325090
+## iter  20 value 10.376550
+## iter  30 value 1.977840
+## iter  40 value 0.964911
+## iter  50 value 0.757765
+## iter  60 value 0.605108
+## iter  70 value 0.538268
+## iter  80 value 0.494731
+## iter  90 value 0.468092
+## iter 100 value 0.445354
+## final  value 0.445354 
 ## stopped after 100 iterations
 ## # weights:  606
-## initial  value 89.636397 
-## iter  10 value 17.171792
-## iter  20 value 6.130509
-## iter  30 value 5.697391
-## iter  40 value 5.619074
-## iter  50 value 1.201511
-## iter  60 value 0.389608
-## iter  70 value 0.320575
-## iter  80 value 0.282765
-## iter  90 value 0.240807
-## iter 100 value 0.220515
-## final  value 0.220515 
+## initial  value 123.910794 
+## iter  10 value 41.952081
+## iter  20 value 20.675701
+## iter  30 value 8.844628
+## iter  40 value 8.471217
+## iter  50 value 7.466216
+## iter  60 value 6.787709
+## iter  70 value 5.427697
+## iter  80 value 1.661677
+## iter  90 value 0.612258
+## iter 100 value 0.499912
+## final  value 0.499912 
 ## stopped after 100 iterations
 ## # weights:  606
-## initial  value 105.752806 
-## iter  10 value 35.385323
-## iter  20 value 17.140782
-## iter  30 value 9.545280
-## iter  40 value 8.256321
-## iter  50 value 6.963095
-## iter  60 value 6.519270
-## iter  70 value 4.032762
-## iter  80 value 0.692304
-## iter  90 value 0.558658
-## iter 100 value 0.483256
-## final  value 0.483256 
+## initial  value 92.972356 
+## iter  10 value 33.210821
+## iter  20 value 3.376561
+## iter  30 value 1.235979
+## iter  40 value 1.010931
+## iter  50 value 0.886725
+## iter  60 value 0.823065
+## iter  70 value 0.772157
+## iter  80 value 0.737091
+## iter  90 value 0.655278
+## iter 100 value 0.561876
+## final  value 0.561876 
 ## stopped after 100 iterations
 ## # weights:  606
-## initial  value 86.149014 
-## iter  10 value 33.645387
-## iter  20 value 4.763213
-## iter  30 value 0.688683
-## iter  40 value 0.594599
-## iter  50 value 0.520407
-## iter  60 value 0.445616
-## iter  70 value 0.402216
-## iter  80 value 0.344280
-## iter  90 value 0.318628
-## iter 100 value 0.283013
-## final  value 0.283013 
+## initial  value 95.458466 
+## iter  10 value 34.679030
+## iter  20 value 15.544754
+## iter  30 value 7.525400
+## iter  40 value 6.188878
+## iter  50 value 0.567809
+## iter  60 value 0.461336
+## iter  70 value 0.399650
+## iter  80 value 0.326468
+## iter  90 value 0.287116
+## iter 100 value 0.263139
+## final  value 0.263139 
 ## stopped after 100 iterations
 ## # weights:  606
-## initial  value 91.395264 
-## iter  10 value 32.197667
-## iter  20 value 16.505880
-## iter  30 value 3.837124
-## iter  40 value 0.678450
-## iter  50 value 0.571330
-## iter  60 value 0.503259
-## iter  70 value 0.458482
-## iter  80 value 0.443074
-## iter  90 value 0.398137
-## iter 100 value 0.377718
-## final  value 0.377718 
+## initial  value 91.897833 
+## iter  10 value 29.915126
+## iter  20 value 24.750155
+## iter  30 value 11.851465
+## iter  40 value 11.403210
+## iter  50 value 11.235723
+## iter  60 value 11.095641
+## iter  70 value 10.836856
+## iter  80 value 10.690511
+## iter  90 value 7.047163
+## iter 100 value 0.864075
+## final  value 0.864075 
 ## stopped after 100 iterations
 ## # weights:  606
-## initial  value 96.003361 
-## iter  10 value 35.318598
-## iter  20 value 10.077770
-## iter  30 value 8.893562
-## iter  40 value 2.111654
-## iter  50 value 1.209595
-## iter  60 value 1.064417
-## iter  70 value 0.916499
-## iter  80 value 0.778295
-## iter  90 value 0.625671
-## iter 100 value 0.446202
-## final  value 0.446202 
+## initial  value 99.686216 
+## iter  10 value 37.669256
+## iter  20 value 17.290303
+## iter  30 value 4.047295
+## iter  40 value 3.876879
+## iter  50 value 1.086287
+## iter  60 value 0.466304
+## iter  70 value 0.415488
+## iter  80 value 0.363774
+## iter  90 value 0.327947
+## iter 100 value 0.298860
+## final  value 0.298860 
 ## stopped after 100 iterations
 ## # weights:  606
-## initial  value 97.003650 
-## iter  10 value 56.803033
-## iter  20 value 15.213131
-## iter  30 value 10.927967
-## iter  40 value 1.925562
-## iter  50 value 0.695300
-## iter  60 value 0.586723
-## iter  70 value 0.482613
-## iter  80 value 0.421412
-## iter  90 value 0.380341
-## iter 100 value 0.351946
-## final  value 0.351946 
+## initial  value 92.752435 
+## iter  10 value 35.869258
+## iter  20 value 18.809745
+## iter  30 value 7.456963
+## iter  40 value 1.848446
+## iter  50 value 1.144496
+## iter  60 value 0.871393
+## iter  70 value 0.710542
+## iter  80 value 0.546472
+## iter  90 value 0.487189
+## iter 100 value 0.431242
+## final  value 0.431242 
 ## stopped after 100 iterations
 ## # weights:  606
-## initial  value 106.720005 
-## iter  10 value 32.870116
-## iter  20 value 12.480544
-## iter  30 value 12.045926
-## iter  40 value 11.848126
-## iter  50 value 4.488205
-## iter  60 value 0.834623
-## iter  70 value 0.690591
-## iter  80 value 0.586690
-## iter  90 value 0.483113
-## iter 100 value 0.434916
-## final  value 0.434916 
+## initial  value 113.669646 
+## iter  10 value 27.519131
+## iter  20 value 11.215761
+## iter  30 value 9.856952
+## iter  40 value 9.735408
+## iter  50 value 4.848432
+## iter  60 value 0.603340
+## iter  70 value 0.520960
+## iter  80 value 0.481928
+## iter  90 value 0.453631
+## iter 100 value 0.434928
+## final  value 0.434928 
 ## stopped after 100 iterations
 ## # weights:  606
-## initial  value 90.453599 
-## iter  10 value 28.251935
-## iter  20 value 21.483691
-## iter  30 value 21.257157
-## iter  40 value 20.884448
-## iter  50 value 17.559433
-## iter  60 value 9.501271
-## iter  70 value 6.922656
-## iter  80 value 5.309429
-## iter  90 value 4.466496
-## iter 100 value 0.885096
-## final  value 0.885096 
+## initial  value 111.932160 
+## iter  10 value 24.723658
+## iter  20 value 11.070369
+## iter  30 value 10.724398
+## iter  40 value 10.568583
+## iter  50 value 10.406681
+## iter  60 value 1.141591
+## iter  70 value 0.572869
+## iter  80 value 0.512067
+## iter  90 value 0.423419
+## iter 100 value 0.391358
+## final  value 0.391358 
 ## stopped after 100 iterations
 ## # weights:  606
-## initial  value 93.840672 
-## iter  10 value 33.627661
-## iter  20 value 9.109606
-## iter  30 value 1.230064
-## iter  40 value 0.752386
-## iter  50 value 0.633437
-## iter  60 value 0.568090
-## iter  70 value 0.478146
-## iter  80 value 0.442713
-## iter  90 value 0.401438
-## iter 100 value 0.326969
-## final  value 0.326969 
+## initial  value 103.070149 
+## iter  10 value 34.546709
+## iter  20 value 13.426669
+## iter  30 value 8.140017
+## iter  40 value 0.603764
+## iter  50 value 0.517020
+## iter  60 value 0.409621
+## iter  70 value 0.343743
+## iter  80 value 0.306947
+## iter  90 value 0.271897
+## iter 100 value 0.244545
+## final  value 0.244545 
 ## stopped after 100 iterations
 ## # weights:  606
-## initial  value 121.476096 
-## iter  10 value 31.862650
-## iter  20 value 11.240729
-## iter  30 value 6.449501
-## iter  40 value 4.787857
-## iter  50 value 1.205529
-## iter  60 value 0.938273
-## iter  70 value 0.685591
-## iter  80 value 0.554522
-## iter  90 value 0.502059
-## iter 100 value 0.398029
-## final  value 0.398029 
+## initial  value 91.491697 
+## iter  10 value 25.034715
+## iter  20 value 2.973598
+## iter  30 value 0.824819
+## iter  40 value 0.710500
+## iter  50 value 0.622785
+## iter  60 value 0.554633
+## iter  70 value 0.480604
+## iter  80 value 0.425026
+## iter  90 value 0.377026
+## iter 100 value 0.352756
+## final  value 0.352756 
 ## stopped after 100 iterations
 ## # weights:  606
-## initial  value 101.624723 
-## iter  10 value 41.616226
-## iter  20 value 18.759656
-## iter  30 value 6.084139
-## iter  40 value 1.332252
-## iter  50 value 1.027188
-## iter  60 value 0.902996
-## iter  70 value 0.799970
-## iter  80 value 0.721044
-## iter  90 value 0.593029
-## iter 100 value 0.496557
-## final  value 0.496557 
+## initial  value 84.673046 
+## iter  10 value 20.794095
+## iter  20 value 1.589354
+## iter  30 value 1.100132
+## iter  40 value 0.878836
+## iter  50 value 0.767378
+## iter  60 value 0.632502
+## iter  70 value 0.564345
+## iter  80 value 0.474101
+## iter  90 value 0.402668
+## iter 100 value 0.343509
+## final  value 0.343509 
 ## stopped after 100 iterations
 ## # weights:  606
-## initial  value 91.278703 
-## iter  10 value 27.387591
-## iter  20 value 8.275907
-## iter  30 value 0.572104
-## iter  40 value 0.434351
-## iter  50 value 0.317699
-## iter  60 value 0.279338
-## iter  70 value 0.247049
-## iter  80 value 0.235876
-## iter  90 value 0.223462
-## iter 100 value 0.214020
-## final  value 0.214020 
+## initial  value 97.893657 
+## iter  10 value 22.297910
+## iter  20 value 1.158581
+## iter  30 value 0.890736
+## iter  40 value 0.721511
+## iter  50 value 0.630595
+## iter  60 value 0.567462
+## iter  70 value 0.521812
+## iter  80 value 0.502870
+## iter  90 value 0.477453
+## iter 100 value 0.416337
+## final  value 0.416337 
 ## stopped after 100 iterations
 ## # weights:  606
-## initial  value 87.234735 
-## iter  10 value 6.442726
-## iter  20 value 2.621968
-## iter  30 value 0.622630
-## iter  40 value 0.541783
-## iter  50 value 0.486780
-## iter  60 value 0.423129
-## iter  70 value 0.405470
-## iter  80 value 0.389826
-## iter  90 value 0.374503
-## iter 100 value 0.365182
-## final  value 0.365182 
+## initial  value 94.703505 
+## iter  10 value 32.218367
+## iter  20 value 17.525845
+## iter  30 value 6.795018
+## iter  40 value 1.566955
+## iter  50 value 0.823052
+## iter  60 value 0.747383
+## iter  70 value 0.635164
+## iter  80 value 0.582949
+## iter  90 value 0.546761
+## iter 100 value 0.493806
+## final  value 0.493806 
 ## stopped after 100 iterations
 ## # weights:  606
-## initial  value 110.963433 
-## iter  10 value 43.638498
-## iter  20 value 19.360764
-## iter  30 value 11.289192
-## iter  40 value 5.264685
-## iter  50 value 2.303719
-## iter  60 value 1.349652
-## iter  70 value 1.099031
-## iter  80 value 0.910186
-## iter  90 value 0.764277
-## iter 100 value 0.564593
-## final  value 0.564593 
+## initial  value 92.828470 
+## iter  10 value 19.543183
+## iter  20 value 9.634082
+## iter  30 value 5.634074
+## iter  40 value 0.664681
+## iter  50 value 0.558658
+## iter  60 value 0.504324
+## iter  70 value 0.447928
+## iter  80 value 0.411931
+## iter  90 value 0.332400
+## iter 100 value 0.291088
+## final  value 0.291088 
 ## stopped after 100 iterations
 ## # weights:  606
-## initial  value 86.477866 
-## iter  10 value 31.843843
-## iter  20 value 18.814660
-## iter  30 value 13.612327
-## iter  40 value 5.704856
-## iter  50 value 5.440539
-## iter  60 value 5.343305
-## iter  70 value 5.286189
-## iter  80 value 5.244527
-## iter  90 value 5.189715
-## iter 100 value 5.170299
-## final  value 5.170299 
+## initial  value 82.962962 
+## iter  10 value 40.122412
+## iter  20 value 12.194521
+## iter  30 value 8.158019
+## iter  40 value 7.592840
+## iter  50 value 7.526355
+## iter  60 value 7.430360
+## iter  70 value 7.367355
+## iter  80 value 2.010155
+## iter  90 value 0.594907
+## iter 100 value 0.571801
+## final  value 0.571801 
 ## stopped after 100 iterations
 ## # weights:  606
-## initial  value 93.655291 
-## iter  10 value 16.899963
-## iter  20 value 2.743733
-## iter  30 value 0.752628
-## iter  40 value 0.668949
-## iter  50 value 0.542230
-## iter  60 value 0.497312
-## iter  70 value 0.429889
-## iter  80 value 0.363895
-## iter  90 value 0.323811
-## iter 100 value 0.302008
-## final  value 0.302008 
+## initial  value 110.103620 
+## iter  10 value 24.289154
+## iter  20 value 4.672369
+## iter  30 value 0.390115
+## iter  40 value 0.347794
+## iter  50 value 0.281545
+## iter  60 value 0.250086
+## iter  70 value 0.239601
+## iter  80 value 0.227999
+## iter  90 value 0.213814
+## iter 100 value 0.202377
+## final  value 0.202377 
 ## stopped after 100 iterations
 ## # weights:  606
-## initial  value 91.146997 
-## iter  10 value 22.695111
-## iter  20 value 1.388944
-## iter  30 value 0.904983
-## iter  40 value 0.736895
-## iter  50 value 0.626526
-## iter  60 value 0.547990
-## iter  70 value 0.502685
-## iter  80 value 0.466524
-## iter  90 value 0.430420
-## iter 100 value 0.386866
-## final  value 0.386866 
+## initial  value 96.723834 
+## iter  10 value 13.332756
+## iter  20 value 1.053899
+## iter  30 value 0.900014
+## iter  40 value 0.804353
+## iter  50 value 0.720397
+## iter  60 value 0.646199
+## iter  70 value 0.594090
+## iter  80 value 0.532426
+## iter  90 value 0.460385
+## iter 100 value 0.394269
+## final  value 0.394269 
 ## stopped after 100 iterations
 ```
 
 ???
 _mention tuning and preprocessing_
+_linout argument: output layer linear or sigmoid_
 
 ---
 
@@ -795,7 +872,7 @@ VI$data[VI$data$x_names == "Mass_39_03", ]
 
 ```
 ##       rel_imp    x_names
-## 15 0.01111107 Mass_39_03
+## 15 0.01119426 Mass_39_03
 ```
 
 
@@ -823,17 +900,29 @@ a sample contained fulvic acid or not. *Bonus: vary the number of hidden units b
 
 
 ---
-### Deep learning models are data hungry
+### Deep learning (DL) algorithms are data hungry
 
-One possible solution: 
 --
-**Transfer learning**
+
+- DL algorithms can only detect what they have previously seen
+
+- The bigger the dataset, the better the classification accuracy (Marcus, 2018)
+
+- Each classification category should be sufficiently represented in the training data  
+
+
+---
+### Deep learning (DL) algorithms are data hungry
+
+- One possible solution:  **Transfer learning**
+
 --
 
 - Extract knowledge from *source task* (e.g. a pretrained model) and apply to *target task*
 
 --
 &lt;img src="Pictures/TL_explan.png" style="width: 100%"/&gt;
+
 
 ???
 _That means using an existing model, trained on a large dataset and tuning it to our dataset_
@@ -947,7 +1036,7 @@ _TODO: What is image segmentation and image translation?_
 
 
 
-### Transfer Learning using CNNs
+### Transfer Learning using CNNs for image classification
 
 
 - Remove last few layers and "freeze" generic layers 
@@ -987,14 +1076,10 @@ _allowing more weights to change_
 ### Examples in ecology 
 
 
-- Transfer learning &amp; CNNs to identify species of *Chironomidae* 
+- Transfer learning &amp; CNNs to identify species of *Chironomidae* (Milošević et al. 2019)
 
-&lt;img src="Pictures/chironomidae_classifier.png" style="width: 60%"/&gt;
+&lt;img src="Pictures/chironomidae_classifier.png" style="width: 65%"/&gt;
 
-
-
-.footnote[.small[Milošević et. al (2019)
-]] 
 
 ???
 _What is shown here?_
@@ -1005,29 +1090,18 @@ _What is shown here?_
 
 #### Using transfer learning:
 
-- CNNs to identify species of *Chironomidae* `\(^1\)`
+- CNNs to identify species of *Chironomidae* (Milošević et al. 2019)
 
 --
 
-- Object detection (R-CNN/YOLO) to label camera trap images `\(^2\)`
+- Object detection (R-CNN/YOLO) to label camera trap images (Schneider et al. 2018)
 
 --
 
-#### Other recent studies:
-
-- Tracking of global fisheries `\(^3\)`
-
---
-
-- Parameterisation of abundance models `\(^4\)`
-
---
-
-- Review: Christin et al. - Applications of deep learning in ecology
+#### Overview on recent studies:
 
 
-.footnote[.small[
-`\(^1\)` Milošević et al. (2019); `\(^2\)` Schneider et al. (2018); `\(^3\)` Kroodsma et al. (2019) ; `\(^4\)` Joseph (2020)]]
+- Review: Christin et al. (2019) - Applications of deep learning in ecology
 
 
 ???
@@ -1036,72 +1110,23 @@ _Usage not only for image classification -&gt; think outside of the box (Max Jos
 
 ---
 
-### Frameworks for training deep learning models
-
-- &lt;img src="Pictures/TensorFlowLogo.svg" style="width: 12%"/&gt;
-  - Library for training and inference of deep neural networks developed for internal use by Google (2011)
-  - Written in *Python* and *C++*
-  - R: https://tensorflow.rstudio.com/
-
---
-
-- &lt;img src="Pictures/Keras.png" style="width: 12%"/&gt;
-  - Open-source framework by Francois Chollet (written in *Python*)
-  - Easy to use, supports also other deep learning libraries as backend 
-  - Keras now part of TensorFlow
-
---
-
-- &lt;img src="Pictures/Pytorch.png" style="width: 16%"/&gt;
-  - Developd by Facebook in 2016 (open-source) for *Python*
-  - Easy to use
-  - R: torch package https://torch.mlverse.org/packages/
-
-???
-Keras: coding the model and the training, TensorFlow for high-performance data pipeline, 
-provids also backend to other frameworks (e.g. Theano)
+### Image classification example in *Python* using transfer learning
 
 
-_Tensorflow source: https://upload.wikimedia.org/wikipedia/commons/1/11/TensorFlowLogo.svg_
-
-_Mention that there are also frameworks for inference, e.g. to make predictions inside an app_
-
----
-
-### Frameworks for training deep learning models
-
-- &lt;img src="Pictures/TensorFlowLogo.svg" style="width: 12%"/&gt;
-
-- &lt;img src="Pictures/Keras.png" style="width: 12%"/&gt;
-
-- &lt;img src="Pictures/Pytorch.png" style="width: 16%"/&gt;
-
-
-- Sharing models: Open Neural Network Exchange (ONNX)
-
-???
-ONNX: Standard format for machine learning models; provides conversion of models between frameworks
-Computation graph models, definitions for operators and standard data types
-Could use R with ONNX
-There is also the https://github.com/rstudio/tensorflow and 
-https://cran.r-project.org/web/packages/keras/vignettes/index.html
-https://torch.mlverse.org/
-
----
-
-### Transfer learning example in Python
-
-
-- We are using an existing pretrained model *MobileNet()*
-
-- This model is an CNN
+- We are using an existing pretrained CNN (*MobileNet()*)
 
 - Its weights are trained on a large annotated image database (ImageNet)
 
 - We will "freeze" most of the generic layers
 
-- We will change few of the last layers (specific) to customize the model
+- We will exchange few of the last layers (specific) to customize the model
 for our classification task
+
+--
+
+- We will classify:
+
+&lt;img src="Pictures/cat_vs_dog.jpeg" style="width: 35%"/&gt;
 
 ---
 
@@ -1109,9 +1134,9 @@ for our classification task
 
 .center[
 
-Art: 
+Art: https://deepart.io/
 
-&lt;img src="Pictures/rbs.png" style="width: 20%"/&gt;
+&lt;img src="Pictures/rbs_express.jpg" style="width: 20%"/&gt;
 
 ]
 
@@ -1119,102 +1144,59 @@ Art:
 
 .center[
 
-&lt;img src="Pictures/rbs_express.jpg" style="width: 20%"/&gt;
+&lt;img src="Pictures/rbs.png" style="width: 20%"/&gt;
 ]
 
 
-???
-_Sources for pictures: 
-computer vision:
-https://www.analyticsinsight.net/wp-content/uploads/2019/04/Computer-Vision12.png
-speech recognition:
-https://joelgarciajr84.medium.com/creating-an-application-that-uses-speech-recognition-76117a396b7d
 
+---
+### References
+
+#### Papers:
+
+- Christin, S., Hervet, É., &amp; Lecomte, N. (2019). Applications for deep learning in ecology. Methods in Ecology and Evolution, 10(10), 1632–1644. https://doi.org/10.1111/2041-210X.13256
+
+
+- Marcus, G. (2018). Deep Learning: A Critical Appraisal.
+ArXiv:1801.00631. http://arxiv.org/abs/1801.00631
+
+- Milošević, D., Milosavljević, A., Predić, B., Medeiros, A. S., Savić-Zdravković, D., Stojković Piperac, M., Kostić, T., Spasić, F., &amp; Leese, F. (2020). Application of deep learning in aquatic bioassessment: Towards automated identification of non-biting midges. Science of The Total Environment, 711, 135160. https://doi.org/10.1016/j.scitotenv.2019.135160
+
+- Schneider, S., Taylor, G. W., &amp; Kremer, S. C. (2018). Deep Learning Object Detection Methods for Ecological Camera Trap Data. arXiv:1803.10842 [cs]. http://arxiv.org/abs/1803.10842
 
 
 ---
 
-## Additional 
-### Basics of Deep Feedforward networks
+### References
 
-- Goal: approximate some function `\(f\)` 
+#### Books
 
---
-- Mapping of some input x to an output y (e.g. a category)
-
-`\(y = f(x, \theta)\)` ; `\(\theta = parameters\)`
-
---
-- Learns the value of the parameters `\(\theta\)` that result in the best function approximation
-
---
-
-- **Feedforward**: Information flows from `\(x\)`, through `\(f\)` to output `\(y\)`
-
---
-
-- **Networks**: Combine many different functions: 
-
-
-`\(f^{(1)}, f^{(2)}, f^{(3)} \rightarrow f(x) f^{(3)}(f^{(2)}(f^{(1)}(x)))\)`
-
-`\(f^{(1)} \rightarrow\)` first layer, `\(f^{(2)} \rightarrow\)` second layer, ... 
-
---
-
-- Length of the chain: **Depth** of the model
-
---
-
-- **Neural**: Inspired by the function of the brain, specifically the neuron
-
-???
-_No feedback connections in which outputs of the model are fed back into itself
-_recurrent neural networks have feedback connections
-
-_Deep Learnings vs shallow learning
-
-_Only loosly inspired by neuroscience and the working of a neuron
+Koul A., Ganja S., Kasam M. (2020). Practical Deep Learning for Cloud, Mobile, and Edge. O'Reiley. ISBN: 978-1-392-03486-5
 
 
 ---
 
-### Basics of Deep forward networks 
+### References
 
-Add here picture with Deep forward network structure (input, hidden and output layers)
-then come to discussion about relationship to neuroscience
+#### Images
 
-- Hidden layer: vectors
-- Each element in the vector can be seen as a "neuron" (units)
-- Each unit receives input from other units and computes its own activation value
+- Guitar:
+https://c1.zzounds.com/media/productmedia/fit,2018by3200/quality,85/1_Full_Straight_Front_NA-b2c2db10f401d973c12a0e86294f5f7c.jpg
+ 
 
-- Conclusion: Rather think of feedforward networks as *function approximation machines* !
+- Ukulele:
+https://www.picklepwns.com/wp-content/uploads/2019/02/Best-ukulele-chords.jpg
+
+- ImageNet screenshot: 
+http://image-net.org/explore
+
+- RBS: 
+https://i1.rgstatic.net/ii/profile.image/272184648138758-1441905285191_Q512/Ralf_Bernhard_Schaefer.jpg
+
+- Cats vs dogs: 
+https://gsurma.medium.com/image-classifier-cats-vs-dogs-with-convolutional-neural-networks-cnns-and-google-colabs-4e9af21ae7a8
 
 ---
-
-### Relationship to statistics
-
-*"Neural networks are merely regression models with transformed predictors" (J. Hoeting)*
-
---
-
-- Linear regression: 
-  - Easy to fit, known assumptions
-  - Limited to linear functions (cannot understand interaction between two input variables)
-
---
-- Extension to represent nonlinear functions: apply linear model to transformed input 
-`\(\phi(x)\)`; `\(\phi\)` nonlinear transformation
-
-- Nonparametric regression: Polynomial regression, regression splines
-???
-_splines apply transformation to x_
-_Doesn't work well for many predictors_
-_User has to decide about the transformation_
-
---
-
-- Deep learning: learns `\(\phi\)` based on the data!
 
 
 

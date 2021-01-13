@@ -68,12 +68,79 @@ xaringanExtra::use_extra_styles(
 
 ---
 
+### Libraries & frameworks for deep learning models
+
+#### R packages that implement NN:
+
+- *neuralnet*, *nnet*, *MXNet*, *tensorflow & keras*, *torch*, *...*
+
+#### Frameworks for training deep learning models:
+
+- Developed by industry (Google, Facebook, ...) and research institutions
+
+- Previously written code blocks have been re-used for new tools & algorithms 
+
+- Created with *Python*, *C++*, *Lua*, ...
+
+- Mostly used with Python 
+
+---
+
+### Frameworks for training deep learning models:
+
+- <img src="Pictures/TensorFlowLogo.svg" style="width: 12%"/>
+  - Library for training and inference of deep neural networks developed for internal use by Google (2011)
+  - R: https://tensorflow.rstudio.com/
+
+--
+
+- <img src="Pictures/Pytorch.png" style="width: 16%"/>
+  - Developd by Facebook in 2016 (open-source) for *Python*  
+  - R: torch package https://torch.mlverse.org/packages/
+
+--
+
+- <img src="Pictures/Keras.png" style="width: 12%"/>
+  - Open-source high-level deep learning framework by Francois Chollet (written in *Python*)
+  - Easy to use, supports tensorflow and other deep learning libraries as backend 
+  - Keras now part of TensorFlow
+
+
+???
+_Keras: coding the model and the training, TensorFlow for high-performance data pipeline,_ 
+_provides also backend to other frameworks (e.g. Theano)_
+_Keras: in f10-15 lines of code a deep learning model can be defined and trained_
+
+_Tensorflow source: https://upload.wikimedia.org/wikipedia/commons/1/11/TensorFlowLogo.svg_
+
+_Mention that there are also frameworks for inference, e.g. to make predictions inside an app_
+
+---
+
+### Frameworks for training deep learning models
+
+- <img src="Pictures/TensorFlowLogo.svg" style="width: 12%"/>
+
+- <img src="Pictures/Keras.png" style="width: 12%"/>
+
+- <img src="Pictures/Pytorch.png" style="width: 16%"/>
+
+
+- Sharing models: Open Neural Network Exchange (ONNX)
+
+???
+ONNX: Standard format for machine learning models; provides conversion of models between frameworks
+Computation graph models, definitions for operators and standard data types
+Could use R with ONNX
+There is also the https://github.com/rstudio/tensorflow and 
+https://cran.r-project.org/web/packages/keras/vignettes/index.html
+https://torch.mlverse.org/
+
+---
+
 ### Small example of a single hidden layer Neural Network (NN)
 
---
-- R packages that implement NN: *neuralnet*, **nnet**, *MXNet*, *tensorflow & keras*, *torch*, *...*
-
---
+- Will use the **nnet** package
 
 - Acess through **caret** package
 
@@ -112,7 +179,7 @@ _uniform syntax_
 
 * Data: nanoparticles measured with and without fulvic acid 
 
-```{r}
+```{r, message=FALSE}
 # load Set_up script
 source(file.path(getwd(), "R", "Set_up.R"))
 
@@ -142,7 +209,9 @@ summary(nanopart$fulvic_acid)
 
 #### Data preparation nanopart
 
-- Scaling the data either to $[0, 1]$ or $\mu = 0$ and $\sigma = 1$ to avoid the dominance of variables with large values
+- Normalising the data either to $[0, 1]$ or scaling to $\mu = 0$ and $\sigma = 1$ to avoid the dominance of variables with large values
+
+--
 
 ```{r}
 # scaling (mean zero, sd 1)
@@ -195,7 +264,8 @@ test <- stand_nanopart[-ind[[1]], ]
 #### Training
 
 ```{r} 
-# eval = FALSE
+str(train$fulvic_acid)
+
 nn_nanopart <- train(
   fulvic_acid ~ .,
   data = train,
@@ -209,6 +279,7 @@ nn_nanopart <- train(
 
 ???
 _mention tuning and preprocessing_
+_linout argument: output layer linear or sigmoid_
 
 ---
 
@@ -345,17 +416,29 @@ a sample contained fulvic acid or not. *Bonus: vary the number of hidden units b
 
 
 ---
-### Deep learning models are data hungry
+### Deep learning (DL) algorithms are data hungry
 
-One possible solution: 
 --
-**Transfer learning**
+
+- DL algorithms can only detect what they have previously seen
+
+- The bigger the dataset, the better the classification accuracy (Marcus, 2018)
+
+- Each classification category should be sufficiently represented in the training data  
+
+
+---
+### Deep learning (DL) algorithms are data hungry
+
+- One possible solution:  **Transfer learning**
+
 --
 
 - Extract knowledge from *source task* (e.g. a pretrained model) and apply to *target task*
 
 --
 <img src="Pictures/TL_explan.png" style="width: 100%"/>
+
 
 ???
 _That means using an existing model, trained on a large dataset and tuning it to our dataset_
@@ -457,7 +540,7 @@ _TODO: What is image segmentation and image translation?_
 
 
 
-### Transfer Learning using CNNs
+### Transfer Learning using CNNs for image classification
 
 
 - Remove last few layers and "freeze" generic layers 
@@ -497,14 +580,10 @@ _allowing more weights to change_
 ### Examples in ecology 
 
 
-- Transfer learning & CNNs to identify species of *Chironomidae* 
+- Transfer learning & CNNs to identify species of *Chironomidae* (Milošević et al. 2019)
 
-<img src="Pictures/chironomidae_classifier.png" style="width: 60%"/>
+<img src="Pictures/chironomidae_classifier.png" style="width: 65%"/>
 
-
-
-.footnote[.small[Milošević et. al (2019)
-]] 
 
 ???
 _What is shown here?_
@@ -515,29 +594,18 @@ _What is shown here?_
 
 #### Using transfer learning:
 
-- CNNs to identify species of *Chironomidae* $^1$
+- CNNs to identify species of *Chironomidae* (Milošević et al. 2019)
 
 --
 
-- Object detection (R-CNN/YOLO) to label camera trap images $^2$
+- Object detection (R-CNN/YOLO) to label camera trap images (Schneider et al. 2018)
 
 --
 
-#### Other recent studies:
-
-- Tracking of global fisheries $^3$
-
---
-
-- Parameterisation of abundance models $^4$
-
---
-
-- Review: Christin et al. - Applications of deep learning in ecology
+#### Overview on recent studies:
 
 
-.footnote[.small[
-$^1$ Milošević et al. (2019); $^2$ Schneider et al. (2018); $^3$ Kroodsma et al. (2019) ; $^4$ Joseph (2020)]]
+- Review: Christin et al. (2019) - Applications of deep learning in ecology
 
 
 ???
@@ -546,72 +614,23 @@ _Usage not only for image classification -> think outside of the box (Max Joseph
 
 ---
 
-### Frameworks for training deep learning models
-
-- <img src="Pictures/TensorFlowLogo.svg" style="width: 12%"/>
-  - Library for training and inference of deep neural networks developed for internal use by Google (2011)
-  - Written in *Python* and *C++*
-  - R: https://tensorflow.rstudio.com/
-
---
-
-- <img src="Pictures/Keras.png" style="width: 12%"/>
-  - Open-source framework by Francois Chollet (written in *Python*)
-  - Easy to use, supports also other deep learning libraries as backend 
-  - Keras now part of TensorFlow
-
---
-
-- <img src="Pictures/Pytorch.png" style="width: 16%"/>
-  - Developd by Facebook in 2016 (open-source) for *Python*
-  - Easy to use
-  - R: torch package https://torch.mlverse.org/packages/
-
-???
-Keras: coding the model and the training, TensorFlow for high-performance data pipeline, 
-provids also backend to other frameworks (e.g. Theano)
+### Image classification example in *Python* using transfer learning
 
 
-_Tensorflow source: https://upload.wikimedia.org/wikipedia/commons/1/11/TensorFlowLogo.svg_
-
-_Mention that there are also frameworks for inference, e.g. to make predictions inside an app_
-
----
-
-### Frameworks for training deep learning models
-
-- <img src="Pictures/TensorFlowLogo.svg" style="width: 12%"/>
-
-- <img src="Pictures/Keras.png" style="width: 12%"/>
-
-- <img src="Pictures/Pytorch.png" style="width: 16%"/>
-
-
-- Sharing models: Open Neural Network Exchange (ONNX)
-
-???
-ONNX: Standard format for machine learning models; provides conversion of models between frameworks
-Computation graph models, definitions for operators and standard data types
-Could use R with ONNX
-There is also the https://github.com/rstudio/tensorflow and 
-https://cran.r-project.org/web/packages/keras/vignettes/index.html
-https://torch.mlverse.org/
-
----
-
-### Transfer learning example in Python
-
-
-- We are using an existing pretrained model *MobileNet()*
-
-- This model is an CNN
+- We are using an existing pretrained CNN (*MobileNet()*)
 
 - Its weights are trained on a large annotated image database (ImageNet)
 
 - We will "freeze" most of the generic layers
 
-- We will change few of the last layers (specific) to customize the model
+- We will exchange few of the last layers (specific) to customize the model
 for our classification task
+
+--
+
+- We will classify:
+
+<img src="Pictures/cat_vs_dog.jpeg" style="width: 35%"/>
 
 ---
 
@@ -619,9 +638,9 @@ for our classification task
 
 .center[
 
-Art: 
+Art: https://deepart.io/
 
-<img src="Pictures/rbs.png" style="width: 20%"/>
+<img src="Pictures/rbs_express.jpg" style="width: 20%"/>
 
 ]
 
@@ -629,102 +648,59 @@ Art:
 
 .center[
 
-<img src="Pictures/rbs_express.jpg" style="width: 20%"/>
+<img src="Pictures/rbs.png" style="width: 20%"/>
 ]
 
 
-???
-_Sources for pictures: 
-computer vision:
-https://www.analyticsinsight.net/wp-content/uploads/2019/04/Computer-Vision12.png
-speech recognition:
-https://joelgarciajr84.medium.com/creating-an-application-that-uses-speech-recognition-76117a396b7d
 
+---
+### References
+
+#### Papers:
+
+- Christin, S., Hervet, É., & Lecomte, N. (2019). Applications for deep learning in ecology. Methods in Ecology and Evolution, 10(10), 1632–1644. https://doi.org/10.1111/2041-210X.13256
+
+
+- Marcus, G. (2018). Deep Learning: A Critical Appraisal.
+ArXiv:1801.00631. http://arxiv.org/abs/1801.00631
+
+- Milošević, D., Milosavljević, A., Predić, B., Medeiros, A. S., Savić-Zdravković, D., Stojković Piperac, M., Kostić, T., Spasić, F., & Leese, F. (2020). Application of deep learning in aquatic bioassessment: Towards automated identification of non-biting midges. Science of The Total Environment, 711, 135160. https://doi.org/10.1016/j.scitotenv.2019.135160
+
+- Schneider, S., Taylor, G. W., & Kremer, S. C. (2018). Deep Learning Object Detection Methods for Ecological Camera Trap Data. arXiv:1803.10842 [cs]. http://arxiv.org/abs/1803.10842
 
 
 ---
 
-## Additional 
-### Basics of Deep Feedforward networks
+### References
 
-- Goal: approximate some function $f$ 
+#### Books
 
---
-- Mapping of some input x to an output y (e.g. a category)
-
-$y = f(x, \theta)$ ; $\theta = parameters$
-
---
-- Learns the value of the parameters $\theta$ that result in the best function approximation
-
---
-
-- **Feedforward**: Information flows from $x$, through $f$ to output $y$
-
---
-
-- **Networks**: Combine many different functions: 
-
-
-$f^{(1)}, f^{(2)}, f^{(3)} \rightarrow f(x) f^{(3)}(f^{(2)}(f^{(1)}(x)))$
-
-$f^{(1)} \rightarrow$ first layer, $f^{(2)} \rightarrow$ second layer, ... 
-
---
-
-- Length of the chain: **Depth** of the model
-
---
-
-- **Neural**: Inspired by the function of the brain, specifically the neuron
-
-???
-_No feedback connections in which outputs of the model are fed back into itself
-_recurrent neural networks have feedback connections
-
-_Deep Learnings vs shallow learning
-
-_Only loosly inspired by neuroscience and the working of a neuron
+Koul A., Ganja S., Kasam M. (2020). Practical Deep Learning for Cloud, Mobile, and Edge. O'Reiley. ISBN: 978-1-392-03486-5
 
 
 ---
 
-### Basics of Deep forward networks 
+### References
 
-Add here picture with Deep forward network structure (input, hidden and output layers)
-then come to discussion about relationship to neuroscience
+#### Images
 
-- Hidden layer: vectors
-- Each element in the vector can be seen as a "neuron" (units)
-- Each unit receives input from other units and computes its own activation value
+- Guitar:
+https://c1.zzounds.com/media/productmedia/fit,2018by3200/quality,85/1_Full_Straight_Front_NA-b2c2db10f401d973c12a0e86294f5f7c.jpg
+ 
 
-- Conclusion: Rather think of feedforward networks as *function approximation machines* !
+- Ukulele:
+https://www.picklepwns.com/wp-content/uploads/2019/02/Best-ukulele-chords.jpg
+
+- ImageNet screenshot: 
+http://image-net.org/explore
+
+- RBS: 
+https://i1.rgstatic.net/ii/profile.image/272184648138758-1441905285191_Q512/Ralf_Bernhard_Schaefer.jpg
+
+- Cats vs dogs: 
+https://gsurma.medium.com/image-classifier-cats-vs-dogs-with-convolutional-neural-networks-cnns-and-google-colabs-4e9af21ae7a8
 
 ---
-
-### Relationship to statistics
-
-*"Neural networks are merely regression models with transformed predictors" (J. Hoeting)*
-
---
-
-- Linear regression: 
-  - Easy to fit, known assumptions
-  - Limited to linear functions (cannot understand interaction between two input variables)
-
---
-- Extension to represent nonlinear functions: apply linear model to transformed input 
-$\phi(x)$; $\phi$ nonlinear transformation
-
-- Nonparametric regression: Polynomial regression, regression splines
-???
-_splines apply transformation to x_
-_Doesn't work well for many predictors_
-_User has to decide about the transformation_
-
---
-
-- Deep learning: learns $\phi$ based on the data!
 
 
 
