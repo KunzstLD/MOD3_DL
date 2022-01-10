@@ -40,3 +40,4 @@ vignettes/*.pdf
 
 # data for jupyter notebook
 data/
+data_bird/
