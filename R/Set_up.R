@@ -9,3 +9,5 @@ library(e1071)
 
 # Path to input data, needs to be specified by the user
 data_in <- file.path(getwd(), "data_task")
+
+data_cache <- file.path(getwd(), "cache")
