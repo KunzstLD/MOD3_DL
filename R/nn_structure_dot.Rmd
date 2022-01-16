@@ -1,0 +1,22 @@
+---
+title: "Neural network structure"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r dot-ex, engine = "dot", cache=TRUE, echo = FALSE}
+# Fix placement of weights and biases!
+# https://github.com/yihui/knitr-examples/blob/master/057-engine-dot.md
+digraph {
+  graph [pad="0.212,0.055" bgcolor=lightgray]
+  rankdir = "LR";
+  
+  input1 -> {h_1, h_2, h_3} -> output;
+  input2 -> {h_1, h_2, h_3};
+
+}
+```
