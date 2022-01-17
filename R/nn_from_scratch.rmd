@@ -1,0 +1,276 @@
+---
+title: "nn_from_scratch"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Building a simple NN from scratch
+
+```{r, message=FALSE}
+# libraries
+library(data.table)
+library(dplyr)
+library(ggplot2)
+library(clusterSim)
+
+# paths
+data_cache <- "/home/kunzst/Dokumente/Lectures/MOD3_2021_2022/MOD3_DL/cache"
+
+###########################################################
+# Neural Network ----
+###########################################################
+
+# data
+set.seed(42)
+df <- clusterSim::shapes.bulls.eye(numObjects = 50)
+plot(df$data, col = c("forestgreen", "steelblue")[df$clusters])
+
+# predictors
+X <- df$data
+# response 
+Y <- df$clusters-1
+
+# number predictors & response & observations
+n_x <- ncol(X)
+n_y <- 1
+m <- nrow(X)
+
+# number neurons/nodes in hidden layer
+n_hidden <- 3
+
+# initialize random weights and biases
+weights1 <-
+  matrix(0.01 * runif(n_hidden * n_x),
+         ncol = n_x,
+         nrow = n_hidden)
+weights2 <-
+  matrix(0.01 * runif(n_y * n_hidden),
+         ncol = n_hidden,
+         nrow = n_y)
+
+# In slides: w_k0 = b_k
+bias1 <- rep(1, n_hidden)
+bias2 <- rep(1, n_y)
+```
+
+```{r}
+# Activation function ----
+sigmoid_fun <- function(x) {
+  1.0 / (1.0 + exp(-x))
+}
+d_sigmoid <- function(x) {
+  exp(x) / (1 + exp(x)) ^ 2
+}
+
+# Plotting of the sigmoid function & derivative ----
+# test <- data.table(x = seq(-5, 5, 0.01),
+#                    value = sigmoid_fun(x = seq(-5, 5, 0.01)),
+#                    value_deriv = d_sigmoid(x = seq(-5, 5, 0.01)))
+# 
+# melt(test,
+#      measure.vars = c("value",
+#                       "value_deriv")) %>%
+#   ggplot(.) +
+#   geom_point(aes(x = x, y = value, color = variable)) +
+#   scale_colour_manual(name = "Function",
+#                      labels = c("Sigmoid", "D_sigmoid"),
+#                      values = c("black", "steelblue")) +
+#   theme_bw() +
+#   theme(
+#     axis.title = element_text(size = 16),
+#     axis.text.x = element_text(family = "Roboto Mono",
+#                                size = 12)
+#   )
+
+
+# Calculation example ----
+# For just one observation 
+weights1 %*% X[1, ]
+# 0.004981566 * (-0.75061923) + (0.08513289)  * 0.003038528
+# 0.002827642* (-0.75061923) + 0.005155512 * (0.08513289)
+
+# for multiple values
+# weights1 %*% X[1:5, ] # matrices not compatible
+# weights1 %*% t(X[1:5, ])
+# weights1 %*% t(X) + bias1
+# sigmoid_fun(weights1 %*% t(X[1:5, ]) + bias1)
+forward_propagation <- function(input,
+                                weights_layer1,
+                                bias_layer1,
+                                weights_layer2,
+                                bias_layer2) {
+  activ1 <- sigmoid_fun(weights_layer1 %*% t(input) + bias_layer1)
+  activ2 <- sigmoid_fun(weights_layer2 %*% activ1 + bias_layer2)
+  list("act_layer1" = activ1,
+       "z_1" = weights_layer1 %*% t(input) + bias_layer1,
+       "output" = activ2, 
+       "z" = weights_layer2 %*% activ1 + bias_layer2)
+}
+# fprop <- forward_propagation(
+#    input = X,
+#    weights_layer1 = weights1,
+#    bias_layer1 = bias1,
+#    weights_layer2 = weights2,
+#    bias_layer2 = bias2
+#  )
+```
+
+-   Tasks: 
+  - What does the output mean?
+  - Define the Rectified linear activation function (ReLU) and its derivative in R
+  - Calculate the forward propagation using the given data and weights & biases with the ReLU activation function. 
+
+```{r}
+test_relu <- readRDS(file.path(data_cache, "relu.rds"))
+melt(test_relu,
+     measure.vars = c("value",
+                      "value_deriv")) %>%
+  ggplot(.) +
+  geom_point(aes(x = x, 
+                 y = value, 
+                 color = variable)) +
+  facet_grid(~variable) +
+  scale_colour_manual(
+    name = "Function",
+    labels = c("ReLU", "D_ReLU"),
+    values = c("black", "steelblue")
+  ) +
+  theme_bw() +
+  theme(
+    axis.title = element_text(size = 16),
+    axis.text.x = element_text(family = "Roboto Mono",
+                               size = 12)
+  )
+```
+
+
+
+```{r}
+# Cost function 
+# sum of squared error function
+cost_function <- function(output, Y) {
+  sum((output - t(Y)) ^ 2)
+}
+# cost_function(output = fprop$output, Y = Y)
+```
+
+
+$$ C_o = (a_{(L)} - y)^2
+
+\\
+
+a_{(L)} = \sigma(w_{(L)} * a_{(L-1)} + b_{(L)}) = \sigma(z_{(L)})
+
+\\
+
+\displaystyle \frac{\partial C_o}{\partial w_{(L)}} = \displaystyle \frac{\partial z_{(L)}}{\partial w_{(L)}} \displaystyle \frac{\partial a_{(L)}}{\partial z_{(L)}} \displaystyle \frac{\partial C_o}{\partial a_{(L)}}
+
+\\
+
+\displaystyle \frac{\partial C_o}{\partial a_{(L)}} = 2(a_{(L)}-y)
+
+\\ 
+
+\displaystyle \frac{\partial a_{(L)}}{\partial z_{(L)}} = \sigma' (z_{(L)})
+
+\\
+
+\displaystyle \frac{\partial z_{(L)}}{\partial w_{(L)}} = a_{(L-1)}
+
+$$
+
+
+```{r}
+# Partial derivatives: sensitivity of cost function to weights & biases
+backward_propagation <-
+  function(Y,
+           input,
+           activ1,
+           z_1,
+           output,
+           z,
+           weights_layer2) {
+    delta <-
+      t(2 * (output - t(Y)) * d_sigmoid(z))
+    d_weights2 <-
+      activ1 %*% delta # influence from previous neurons!
+    d_bias2 <-
+      sum(1 * delta)
+    
+    delta <-
+      delta %*% weights_layer2 * t(d_sigmoid(z_1)) # dC_o/dw_L-1
+    d_weights1 <- t(delta) %*% input
+    d_bias1 <- colSums(delta)
+    list(
+      "deriv_weights1" = d_weights1,
+      "deriv_weights2" = d_weights2,
+      "deriv_bias1" = d_bias1,
+      "deriv_bias2" = d_bias2
+    )
+  }
+# test_backward <- backward_propagation(
+#   Y = Y,
+#   input = X,
+#   activ1 = fprop$act_layer1,
+#   output = fprop$output,
+#   weights_layer2 = weights2, 
+#   z = fprop$z
+# )
+```
+
+- Q: What problem could arise during backpropagation when using the sigmoid activation function
+in our model?
+
+
+```{r}
+# Parameters for NN
+iteration <- 4000
+lr <- 0.01
+cost <- list()
+
+for (i in seq_len(iteration)) {
+  res_forward <- forward_propagation(
+    input = X,
+    weights_layer1 = weights1,
+    bias_layer1 = bias1,
+    weights_layer2 = weights2,
+    bias_layer2 = bias2
+  )
+  cost[[i]] <- cost_function(output = res_forward$output,
+                             Y = Y)
+  
+  # learning
+  res_backward <- backward_propagation(
+    Y = Y,
+    input = X,
+    activ1 = res_forward$act_layer1,
+    z_1 = res_forward$z_1,
+    output = res_forward$output,
+    z = res_forward$z,
+    weights_layer2 = weights2
+  )
+  
+  weights1 <- weights1 - (lr * res_backward$deriv_weights1)
+  bias1 <- bias1 - (lr * res_backward$deriv_bias1)
+  weights2 <- weights2 - t(lr * res_backward$deriv_weights2)
+  bias2 <- bias2 - (lr * res_backward$deriv_bias2)
+}
+
+# plotting the cost
+cost <- unlist(cost)
+cost <- data.frame("cost" = cost,
+                   iteration = 1:length(cost))
+
+ggplot(cost) +
+  geom_point(aes(x = iteration, y = cost), 
+             size = 1)
+```
+- Where are the predictions of the final iteration stored? 
+- How many points are correctly classified?
+
+
+
+
